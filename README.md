@@ -4,7 +4,7 @@ Página única (`index.html`), sem dependências externas, pronta pra GitHub Pag
 Hub com **duas seções**:
 - **Acadêmico:** LinkedIn, Lattes, ORCID
 - **Meu Locus:** YouTube e TikTok (@meulocus), Instagram e Threads (@dra.fernanda.damasceno)
-- **Indicações:** destaques + link pra página de cupons (linksdescontos)
+- **Indicações:** só o link pra página de cupons (linksdescontos), onde ficam todos os produtos
 
 ## ✅ Antes de publicar
 1. (Opcional) Trocar as iniciais "FDS" por uma **foto**: coloque `foto.jpg` nesta pasta e siga o comentário no CSS (`.avatar`).
