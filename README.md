@@ -2,8 +2,9 @@
 
 Página única (`index.html`), sem dependências externas, pronta pra GitHub Pages.
 Hub com **duas seções**:
-- **Pessoal & acadêmico:** Instagram (@ferdamsceno), LinkedIn, Lattes, ORCID
-- **Meu Locus:** YouTube (@meulocus, Instagram do canal (@meulocus)
+- **Acadêmico:** LinkedIn, Lattes, ORCID
+- **Meu Locus:** YouTube e TikTok (@meulocus), Instagram e Threads (@dra.fernanda.damasceno)
+- **Indicações:** destaques + link pra página de cupons (linksdescontos)
 
 ## ✅ Antes de publicar
 1. (Opcional) Trocar as iniciais "FDS" por uma **foto**: coloque `foto.jpg` nesta pasta e siga o comentário no CSS (`.avatar`).
