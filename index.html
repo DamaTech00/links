@@ -69,6 +69,15 @@
     .arrow{margin-left:auto;color:var(--lilac);flex:0 0 auto;opacity:.6}
     .emoji-vi{color:transparent;text-shadow:0 0 0 var(--lilac)}
     .book-ic{width:1.2em;height:1.2em;vertical-align:-0.22em;margin-right:.2em}
+    .tool{width:100%;margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+    .tool-head{display:flex;align-items:center;gap:14px}
+    .tool-head a{color:var(--ink);text-decoration:none}
+    .tool-head a:hover{text-decoration:underline}
+    .dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+    .dl a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border-radius:12px;border:1px solid var(--line);background:rgba(16,12,42,.55);color:var(--ink);text-decoration:none;font-weight:600;font-size:.88rem;text-align:center;transition:border-color .12s ease,background .12s ease}
+    .dl a:hover,.dl a:focus-visible{border-color:var(--lilac);background:rgba(160,96,216,.18);outline:none}
+    .dl small{font-weight:400;font-size:.68rem;color:var(--muted)}
+    .tool-note{margin-top:10px;font-size:.72rem;color:var(--dim);text-align:center}
     footer{margin-top:34px;font-size:.74rem;color:var(--dim);text-align:center}
     footer a{color:var(--lilac);text-decoration:none;font-weight:600}
     @media (max-width:380px){.links a,.links-soon{padding:13px 15px}h1{font-size:1.5rem}}
@@ -138,6 +147,20 @@
         <span class="txt"><span class="t">Threads</span><span class="s">@dra.fernanda.damasceno</span></span>
         <span class="arrow" aria-hidden="true">↗</span></a></li>
     </ul>
+
+    <p class="section-label">Ferramentas que eu criei</p>
+    <div class="tool">
+      <div class="tool-head">
+        <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></span>
+        <span class="txt"><a class="t" href="https://github.com/DamaTech00/sussurro" target="_blank" rel="noopener noreferrer">Sussurro</a><span class="s">Gravador e transcritor inteligente (faster-whisper + IA) com saída para Obsidian · gratuito</span></span>
+      </div>
+      <div class="dl" role="group" aria-label="Baixar o Sussurro">
+        <a href="https://github.com/DamaTech00/sussurro/archive/refs/heads/main.zip" download>Windows<small>10 e 11</small></a>
+        <a href="https://github.com/DamaTech00/sussurro/archive/refs/heads/main.zip" download>macOS<small>áudio do PC: BlackHole</small></a>
+        <a href="https://github.com/DamaTech00/sussurro/archive/refs/heads/main.zip" download>Linux<small>Ubuntu / Debian</small></a>
+      </div>
+      <p class="tool-note">Descompacte e rode o instalador da pasta <b>plataformas/</b> do seu sistema.</p>
+    </div>
 
     <p class="section-label">Indicações</p>
     <ul class="links">
