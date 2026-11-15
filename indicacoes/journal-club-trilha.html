@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Journal Club meu locus · Trilha de conteúdos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,800;1,600;1,800&display=swap">
+<style>
+:root{--bg:#100C2A;--bg2:#0B0820;--fg:#EDE6FF;--muted:rgba(237,230,255,.72);--lilac:#D9B8FF;--violet:#A860D8;--blue:#3A5BD0;--orange:#FB923C;--card:rgba(160,96,216,.10);--line:rgba(216,184,255,.26);--serif:"Playfair Display",Georgia,serif;--sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:url("padrao-lilas.png") 0 0/620px auto repeat,radial-gradient(760px 460px at 50% -6%,rgba(168,96,216,.34) 0%,rgba(168,96,216,0) 62%),radial-gradient(600px 420px at 100% 100%,rgba(58,91,208,.18) 0%,rgba(58,91,208,0) 60%),linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);background-attachment:fixed;color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.55}
+.wrap{max-width:900px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-left,0px)) 56px;display:grid;gap:30px}
+.brand{font-family:var(--serif);font-weight:800;font-size:15px}
+.brand i{background:linear-gradient(90deg,var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+h1{font-family:var(--serif);font-weight:800;font-size:clamp(28px,5vw,40px);line-height:1.1;margin:4px 0 0;text-wrap:balance}
+h1 em{font-style:italic;color:var(--lilac)}
+h2{font-family:var(--serif);font-weight:700;font-size:22px;margin:0 0 10px}
+h2 em{color:var(--lilac)}
+.lead{color:var(--muted);max-width:66ch;margin:8px 0 0}
+section{display:grid;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+ul{margin:0;padding:0;list-style:none;display:grid;gap:7px}
+li{padding-left:16px;position:relative;font-size:14px}
+li::before{content:"";position:absolute;left:0;top:.62em;width:7px;height:7px;border-radius:2px;background:var(--violet)}
+li b{color:var(--lilac);font-weight:600}
+.rule{font-size:13.5px;border:1px dashed var(--orange);border-radius:12px;padding:10px 14px}
+.rule b{color:var(--orange)}
+.why{font-size:14.5px;border:1px solid var(--line);border-left:3px solid var(--violet);border-radius:0 14px 14px 0;padding:12px 16px;background:var(--card)}
+.foot{font-size:12.5px;color:var(--muted)}
+.bar{height:8px;border-radius:99px;background:rgba(237,230,255,.12);overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--violet));transition:width .25s}
+.week{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;align-items:start;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--card)}
+.week.done{opacity:.6}
+.week input[type=checkbox]{width:20px;height:20px;margin-top:3px;accent-color:var(--violet)}
+.wk{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lilac);font-weight:700}
+.wt{font-family:var(--serif);font-weight:800;font-size:18px;margin:1px 0 4px;text-wrap:balance}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px 16px;font-size:13px;color:var(--muted)}
+.meta b{color:var(--fg);font-weight:600}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;color:#100C2A;background:var(--orange);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+.slot{margin-top:8px;display:grid;gap:6px}
+.slot input[type=text]{width:100%;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:8px;color:var(--fg);padding:8px 10px;font:inherit;font-size:13.5px}
+.slot input::placeholder{color:rgba(237,230,255,.45)}
+</style></head><body>
+<div class="wrap">
+
+<header>
+  <a href="index.html" style="display:inline-block;margin-bottom:10px;color:#D9B8FF;text-decoration:none;font-size:13px">← Recursos do Meu Locus</a>
+  <div class="brand"><i>meu</i> locus · journal club</div>
+  <h1>Minha trilha de <em>12 semanas</em></h1>
+  <p class="lead">Uma linha pra eu seguir: cada semana treina uma habilidade de leitura crítica que cai em prova e que eu uso na pesquisa. Os artigos vêm das provas que eu já fiz, e eu vou mudando a ordem conforme o que o pessoal pedir.</p>
+</header>
+
+<div class="why"><b>A intenção:</b> criar uma comunidade de estudantes que se apoiam e crescem juntos. Depois, crescer como médica e ajudar pacientes também. Por isso a trilha não tem meta de número: eu escuto o que vocês precisam, vejo o que mais ajuda e faço mais disso.</div>
+
+<section>
+  <h2>Passo 0 · <em>levantar</em> os artigos das provas</h2>
+  <div class="card"><ul>
+    <li><b>1 a 2 horas, uma vez:</b> abro as últimas provas que eu tenho.</li>
+    <li>Listo toda questão baseada em estudo, artigo ou diretriz: nome do estudo, tema e ano.</li>
+    <li>Agrupo por tema e ordeno pelo que mais aparece. Isso vira o meu banco de artigos.</li>
+    <li>Pra cada semana abaixo, escolho do banco o artigo que melhor treina aquela habilidade.</li>
+    <li>Se um tema não tiver artigo no banco, uso uma diretriz ou um estudo clássico da área, confirmando título e PMID.</li>
+  </ul></div>
+  <div class="rule"><b>Atenção:</b> os artigos vêm das provas que eu realmente fiz. Eu não deixei nomes de estudos aqui de propósito, pra não discutir algo que nunca caiu.</div>
+</section>
+
+<section>
+  <h2>Progresso</h2>
+  <div class="bar"><i id="prog"></i></div>
+  <p class="foot" id="progtxt">0 de 12 semanas</p>
+</section>
+
+<section id="weeks"></section>
+
+<section>
+  <h2>Depois da semana 12</h2>
+  <div class="card"><ul>
+    <li><b>Reviso com o pessoal:</b> o que vocês pediram, em qual semana teve mais conversa e qual corte ajudou mais.</li>
+    <li><b>Mantenho o que ajuda</b> e troco o que não está servindo.</li>
+    <li><b>Se vocês pedirem outro tema, ele entra na frente.</b> A trilha é um ponto de partida, não um contrato.</li>
+    <li><b>Quando eu estiver formada,</b> troco as semanas de prova por temas da prática clínica e mantenho a mesma estrutura.</li>
+  </ul></div>
+  <p class="foot">Os itens marcados e os artigos que eu digito ficam salvos só neste navegador.</p>
+</section>
+
+</div>
+<script>
+(function(){
+  var W=[
+    ["Ensaio clínico","Estudo randomizado","Viés, intenção de tratar e NNT","","Escolho um estudo de clínica geral ou oncologia que já caiu."],
+    ["Coorte e risco","Estudo de coorte","Confusão, risco relativo e risco absoluto","",""],
+    ["Meta-análise","Meta-análise de ensaios","Forest plot, heterogeneidade e viés de publicação","Metascout","Semana natural pra falar da Metascout."],
+    ["Teste diagnóstico","Estudo de acurácia","Sensibilidade, especificidade, valores preditivos e ROC","",""],
+    ["Sobrevida","Ensaio em oncologia","Kaplan-Meier, hazard ratio e benefício absoluto","",""],
+    ["Oncogenética","Estudo ou diretriz de câncer hereditário","Critérios de teste, penetrância e conduta","","Minha área. Bom artigo pra mostrar o que eu pesquiso."],
+    ["Genômica e aconselhamento","Estudo de painel ou sequenciamento","Variantes de significado incerto e utilidade clínica","","Um tema que eu quero aprofundar."],
+    ["Diretriz de clínica geral","Diretriz atualizada","Mudança de conduta e nível de evidência","","Escolho um tema que aparece bastante nas provas."],
+    ["Rastreamento","Estudo de rastreamento","Viés de antecipação, sobrediagnóstico e mortalidade específica","","Costuma render boas pegadinhas."],
+    ["Evidência na prática","Revisão ou estudo pragmático","Eficácia x efetividade e validade externa","",""],
+    ["Randomização mendeliana","Estudo de MR","Pressupostos dos instrumentos e pleiotropia","","Tenho experiência de pesquisa com isso."],
+    ["Revisão da trilha","Revisitar 2 artigos","Refazer as questões que mais errei, e as que vocês mais pediram","","Semana de balanço com a comunidade."]
+  ];
+  var KEY="jc-trilha",st={done:{},art:{}};
+  try{st=JSON.parse(localStorage.getItem(KEY)||"")||st}catch(e){}
+  if(!st.done)st.done={};if(!st.art)st.art={};
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+  var root=document.getElementById("weeks");
+  var h=document.createElement("h2");h.innerHTML="As <em>semanas</em>";root.appendChild(h);
+  function upd(){
+    var n=0;W.forEach(function(_,i){if(st.done[i])n++});
+    document.getElementById("prog").style.width=(n/W.length*100)+"%";
+    document.getElementById("progtxt").textContent=n+" de "+W.length+" semanas";
+  }
+  W.forEach(function(w,i){
+    var d=document.createElement("div");d.className="week"+(st.done[i]?" done":"");
+    var c=document.createElement("input");c.type="checkbox";c.checked=!!st.done[i];c.setAttribute("aria-label","Semana "+(i+1)+" concluída");
+    c.addEventListener("change",function(){st.done[i]=c.checked;d.classList.toggle("done",c.checked);save();upd()});
+    var b=document.createElement("div");
+    var bridge=w[3]?'<span class="pill">PARCERIA · '+w[3]+'</span>':"";
+    b.innerHTML='<div class="wk">Semana '+(i+1)+'</div><div class="wt">'+w[0]+bridge+'</div>'+
+      '<div class="meta"><div><b>Tipo de estudo:</b> '+w[1]+'</div><div><b>Habilidade:</b> '+w[2]+'</div></div>'+
+      (w[4]?'<div class="foot" style="margin-top:6px">'+w[4]+'</div>':"");
+    var s=document.createElement("div");s.className="slot";
+    var t=document.createElement("input");t.type="text";t.placeholder="Artigo da semana (título e PMID, tirado das provas)";t.value=st.art[i]||"";
+    t.setAttribute("aria-label","Artigo da semana "+(i+1));
+    t.addEventListener("input",function(){st.art[i]=t.value;save()});
+    s.appendChild(t);b.appendChild(s);
+    d.appendChild(c);d.appendChild(b);root.appendChild(d);
+  });
+  upd();
+})();
+</script>
+</body></html>
