@@ -485,32 +485,53 @@
     for (var k in attrs) el.setAttribute(k, attrs[k]);
     return el;
   }
-  function box(svg, x, y, w, h, text, opts){
+  // ---- primitivas de diagrama: caixas medem e quebram o texto, altura automática, rótulos com contorno ----
+  var _mc = document.createElement('canvas').getContext('2d');
+  function tw(txt, fs, bold){ _mc.font = (bold?'600 ':'400 ') + fs + 'px Inter, sans-serif'; return _mc.measureText(txt).width * 1.07; }
+  function wrapLines(lines, maxW, fs, bold){
+    var out = [];
+    lines.forEach(function(line){
+      var cur = '';
+      line.split(' ').forEach(function(wd){
+        var t = cur ? cur + ' ' + wd : wd;
+        if (!cur || tw(t, fs, bold) <= maxW) cur = t; else { out.push(cur); cur = wd; }
+      });
+      out.push(cur);
+    });
+    return out;
+  }
+  function boxH(w, text, opts){
     opts = opts || {};
+    var fs = opts.fs || 12, lines = wrapLines(Array.isArray(text)?text:[text], w-18, fs, opts.bold);
+    return Math.max(opts.h || 0, lines.length*(fs+4) + 16);
+  }
+  // box centrado em cx; devolve geometria para ligar setas
+  function box(svg, cx, y, w, text, opts){
+    opts = opts || {};
+    var fs = opts.fs || 12, lh = fs + 4;
+    var lines = wrapLines(Array.isArray(text)?text:[text], w-18, fs, opts.bold);
+    var h = Math.max(opts.h || 0, lines.length*lh + 16), x = cx - w/2;
     var g = svgEl('g', {});
-    var rx = opts.rx != null ? opts.rx : 8;
-    var fill = opts.fill || 'var(--surface-2)';
-    var stroke = opts.stroke || 'var(--border)';
-    var r = svgEl('rect', {x:x, y:y, width:w, height:h, rx:rx, fill:fill, stroke:stroke, 'stroke-width': opts.sw || 1.5});
-    g.appendChild(r);
-    var lines = Array.isArray(text) ? text : [text];
-    var fs = opts.fs || 12.5;
-    var lh = fs + 4;
-    var totalH = lines.length * lh;
-    var startY = y + h/2 - totalH/2 + fs*0.8;
+    g.appendChild(svgEl('rect', {x:x, y:y, width:w, height:h, rx:opts.rx!=null?opts.rx:9, fill:opts.fill||'var(--surface-2)', stroke:opts.stroke||'var(--border)', 'stroke-width':opts.sw||1.5}));
+    var startY = y + h/2 - lines.length*lh/2 + fs*0.82;
     lines.forEach(function(line, i){
-      var t = svgEl('text', {x: x+w/2, y: startY + i*lh, 'text-anchor':'middle', 'font-size': fs,
-        'font-family':"Inter, sans-serif", 'font-weight': opts.bold ? 600 : 400, fill: opts.color || 'var(--text)'});
-      t.textContent = line;
-      g.appendChild(t);
+      var t = svgEl('text', {x:cx, y:startY + i*lh, 'text-anchor':'middle', 'font-size':fs, 'font-family':'Inter, sans-serif', 'font-weight':opts.bold?600:400, fill:opts.color||'var(--text)'});
+      t.textContent = line; g.appendChild(t);
     });
     svg.appendChild(g);
-    return {x:x,y:y,w:w,h:h};
+    svg._maxY = Math.max(svg._maxY||0, y+h);
+    return {x:x, y:y, w:w, h:h, cx:cx, l:x, r:x+w, t:y, b:y+h, my:y+h/2};
+  }
+  // duas caixas lado a lado com a mesma altura: L/R = {cx,w,text,opts}
+  function pair(svg, y, L, R){
+    var h = Math.max(boxH(L.w,L.text,L.opts), boxH(R.w,R.text,R.opts));
+    var lo = Object.assign({}, L.opts||{}, {h:h}), ro = Object.assign({}, R.opts||{}, {h:h});
+    return {L: box(svg,L.cx,y,L.w,L.text,lo), R: box(svg,R.cx,y,R.w,R.text,ro), b: y+h};
   }
   function label(svg, x, y, text, opts){
     opts = opts || {};
-    var t = svgEl('text', {x:x, y:y, 'text-anchor': opts.anchor || 'middle', 'font-size': opts.fs || 11,
-      'font-family':"'IBM Plex Mono', monospace", fill: opts.color || 'var(--text-muted)', 'font-weight': opts.bold?600:400});
+    var t = svgEl('text', {x:x, y:y, 'text-anchor':opts.anchor||'middle', 'font-size':opts.fs||11, 'font-family':"'IBM Plex Mono', monospace",
+      fill:opts.color||'var(--text-muted)', 'font-weight':opts.bold===false?400:600, stroke:'var(--surface)', 'stroke-width':5, 'stroke-linejoin':'round', 'paint-order':'stroke'});
     t.textContent = text;
     svg.appendChild(t);
   }
@@ -519,15 +540,13 @@
     var color = opts.color || 'var(--text-muted)';
     var markerId = 'arrow-' + Math.round(Math.random()*1e6);
     var defs = svg.querySelector('defs') || svg.insertBefore(svgEl('defs',{}), svg.firstChild);
-    var marker = svgEl('marker', {id: markerId, markerWidth:8, markerHeight:8, refX:6, refY:3, orient:'auto', markerUnits:'strokeWidth'});
-    var path = svgEl('path', {d:'M0,0 L0,6 L7,3 z', fill: color});
-    marker.appendChild(path); defs.appendChild(marker);
-    var line = svgEl(opts.path ? 'path' : 'line', opts.path ?
-      {d: opts.path, fill:'none', stroke: color, 'stroke-width': opts.sw||1.6, 'marker-end':'url(#'+markerId+')'} :
-      {x1:x1,y1:y1,x2:x2,y2:y2, stroke: color, 'stroke-width': opts.sw||1.6, 'marker-end':'url(#'+markerId+')'});
-    svg.appendChild(line);
-    if (opts.text) label(svg, opts.tx != null ? opts.tx : (x1+x2)/2, opts.ty != null ? opts.ty : (y1+y2)/2 - 5, opts.text, {color: opts.tcolor || color, bold:true});
+    var marker = svgEl('marker', {id:markerId, markerWidth:8, markerHeight:8, refX:6, refY:3, orient:'auto', markerUnits:'strokeWidth'});
+    marker.appendChild(svgEl('path', {d:'M0,0 L0,6 L7,3 z', fill:color})); defs.appendChild(marker);
+    svg.appendChild(svgEl('line', {x1:x1,y1:y1,x2:x2,y2:y2, stroke:color, 'stroke-width':opts.sw||1.6, 'marker-end':'url(#'+markerId+')'}));
   }
+  function finish(svg, w){ svg.setAttribute('viewBox','0 0 '+(w||640)+' '+Math.ceil((svg._maxY||300)+12)); }
+  var ALERT = {fill:'var(--alert-soft)', stroke:'var(--alert)'}, ACC = {fill:'var(--accent-soft)', stroke:'var(--accent)'}, GOOD = {fill:'var(--good-soft)', stroke:'var(--good)'};
+  function mix(a, b){ return Object.assign({}, a, b); }
 
   var flows = {};
 
@@ -536,41 +555,29 @@
     title: 'PCR sem pulso',
     note: 'Verificar pulso/ritmo a cada 2 min, sem interromper compressões por mais de 10s. Buscar H\'s e T\'s em toda parada.',
     build: function(svg){
-      svg.setAttribute('viewBox','0 0 640 520');
-      box(svg,220,10,200,42,['RCP de alta qualidade','+ monitor/desfibrilador'],{bold:true});
-      arrow(svg,320,52,320,80);
-      box(svg,220,80,200,40,'Checar ritmo',{});
-      arrow(svg,240,120,140,160,{});
-      arrow(svg,400,120,500,160,{});
-      label(svg,190,145,'chocável',{color:'var(--alert)',bold:true,anchor:'end'});
-      label(svg,450,145,'não chocável',{color:'var(--accent)',bold:true,anchor:'start'});
-
-      box(svg,40,160,200,40,'FV / TV sem pulso',{stroke:'var(--alert)'});
-      box(svg,400,160,200,40,'AESP / Assistolia',{stroke:'var(--accent)'});
-
-      arrow(svg,140,200,140,232);
-      box(svg,40,232,200,36,'1 choque',{fill:'var(--alert-soft)',stroke:'var(--alert)'});
-      arrow(svg,140,268,140,300);
-      box(svg,40,300,200,40,['RCP 2 min','acesso IV/IO'],{});
-
-      arrow(svg,500,200,500,232);
-      box(svg,400,232,200,40,['RCP 2 min','acesso IV/IO'],{});
-      arrow(svg,500,272,500,300);
-      box(svg,400,300,200,36,'Epinefrina 1 mg a cada 3–5 min',{fill:'var(--accent-soft)',stroke:'var(--accent)',fs:11.5});
-
-      arrow(svg,140,340,140,372);
-      box(svg,40,372,200,44,['Persiste chocável?','Epinefrina 1mg + choque'],{fs:11.5});
-      arrow(svg,140,416,140,448);
-      box(svg,40,448,200,44,['Ainda refratário:','Amiodarona 300→150mg'],{fill:'var(--alert-soft)',stroke:'var(--alert)',fs:11.5});
-
-      arrow(svg,500,336,500,372);
-      box(svg,400,372,200,44,['Checar ritmo/pulso','a cada 2 min'],{fs:11.5});
-      arrow(svg,500,416,500,448);
-      box(svg,400,448,200,44,['Buscar causa:','H\'s e T\'s'],{fill:'var(--accent-soft)',stroke:'var(--accent)',fs:11.5});
-
-      arrow(svg,240,392,400,392,{path:'M240,392 C 320,392 320,392 400,392', color:'var(--text-muted)'});
-      label(svg,320,382,'ritmo organizado + pulso →',{fs:10});
-      label(svg,320,398,'cuidados pós-PCR',{fs:10,bold:true,color:'var(--good)'});
+      var CL=105, CR=535, CM=320, W=190, G=26;
+      var t = box(svg,CM,6,270,['RCP de alta qualidade','+ monitor/desfibrilador'],{bold:true});
+      arrow(svg,CM,t.b,CM,t.b+G);
+      var c = box(svg,CM,t.b+G,200,'Checar ritmo',{bold:true});
+      var y = c.b + 50;
+      arrow(svg,c.l+36,c.b,CL,y); arrow(svg,c.r-36,c.b,CR,y);
+      label(svg,(c.l+36+CL)/2-8,c.b+24,'chocável',{color:'var(--alert)',anchor:'end'});
+      label(svg,(c.r-36+CR)/2+8,c.b+24,'não chocável',{color:'var(--accent)',anchor:'start'});
+      var r1 = pair(svg,y,{cx:CL,w:W,text:'FV / TV sem pulso',opts:{stroke:'var(--alert)',bold:true}},{cx:CR,w:W,text:'AESP / Assistolia',opts:{stroke:'var(--accent)',bold:true}});
+      function down(r){ arrow(svg,CL,r.L.b,CL,r.b+G); arrow(svg,CR,r.R.b,CR,r.b+G); return r.b+G; }
+      y = down(r1);
+      var r2 = pair(svg,y,{cx:CL,w:W,text:'1 choque',opts:ALERT},{cx:CR,w:W,text:['RCP 2 min','+ acesso IV/IO']});
+      y = down(r2);
+      var r3 = pair(svg,y,{cx:CL,w:W,text:['RCP 2 min','+ acesso IV/IO']},{cx:CR,w:W,text:['Epinefrina 1 mg','a cada 3–5 min'],opts:ACC});
+      y = down(r3);
+      var r4 = pair(svg,y,{cx:CL,w:W,text:['Checar ritmo a cada 2 min','Persiste chocável?','Epinefrina 1 mg + choque'],opts:{fs:11.5}},{cx:CR,w:W,text:['Checar ritmo/pulso','a cada 2 min'],opts:{fs:11.5}});
+      // ritmo organizado + pulso -> cuidados pós-PCR (caixa própria, sem texto em cima de linha)
+      var m = box(svg,CM,r4.L.my-26,150,['Ritmo organizado','+ pulso presente','→ cuidados pós-PCR'],mix(GOOD,{fs:11,bold:true,h:52}));
+      arrow(svg,r4.L.r,r4.L.my,m.l,m.my);
+      arrow(svg,r4.R.l,r4.R.my,m.r,m.my);
+      y = down(r4);
+      pair(svg,y,{cx:CL,w:W,text:['Refratário: amiodarona','300 mg → 150 mg'],opts:mix(ALERT,{fs:11.5})},{cx:CR,w:W,text:['Buscar causa:','H\'s e T\'s'],opts:ACC});
+      finish(svg);
     }
   };
 
@@ -579,23 +586,22 @@
     title: 'Bradicardia',
     note: 'FC < 50/min. Tratar a causa se assintomático; agir apenas se sintomático (hipotensão, alteração de consciência, dor torácica, sinais de choque).',
     build: function(svg){
-      svg.setAttribute('viewBox','0 0 640 400');
-      box(svg,220,10,200,40,'FC < 50/min',{bold:true});
-      arrow(svg,320,50,320,78);
-      box(svg,220,78,200,44,['Sintomático?','(hipotensão / choque / dor / consciência ↓)'],{fs:11});
-      arrow(svg,240,122,140,156);
-      arrow(svg,400,122,500,156);
-      label(svg,190,142,'não',{anchor:'end'});
-      label(svg,450,142,'sim',{anchor:'start',bold:true,color:'var(--alert)'});
-
-      box(svg,40,156,200,40,['Observar,','monitorar'],{fill:'var(--good-soft)',stroke:'var(--good)'});
-
-      box(svg,400,156,200,36,'Atropina 1 mg IV/IO',{fill:'var(--alert-soft)',stroke:'var(--alert)'});
-      arrow(svg,500,192,500,224);
-      label(svg,500,214,'repetir até 3 mg / máx.',{fs:10});
-      box(svg,400,224,200,44,['Persiste sintomático?','considerar causa (Mobitz II/BAVT)'],{fs:11});
-      arrow(svg,500,268,500,300);
-      box(svg,400,300,200,48,['Estimulação transcutânea','ou dopamina 5–20 mcg/kg/min','ou epinefrina 2–10 mcg/min'],{fs:11,fill:'var(--accent-soft)',stroke:'var(--accent)'});
+      var CL=120, CR=500, CM=320, G=30;
+      var t = box(svg,CM,6,200,'FC < 50/min',{bold:true});
+      arrow(svg,CM,t.b,CM,t.b+G);
+      var q = box(svg,CM,t.b+G,330,['Sintomático?','(hipotensão / choque / dor torácica / consciência ↓)'],{fs:11.5});
+      var y = q.b + 46;
+      arrow(svg,q.l+60,q.b,CL,y); arrow(svg,q.r-60,q.b,CR,y);
+      label(svg,(q.l+60+CL)/2-8,q.b+24,'não',{anchor:'end'});
+      label(svg,(q.r-60+CR)/2+8,q.b+24,'sim',{anchor:'start',color:'var(--alert)'});
+      box(svg,CL,y,210,['Observar,','monitorar'],GOOD);
+      var a = box(svg,CR,y,220,'Atropina 1 mg IV/IO',mix(ALERT,{bold:true}));
+      arrow(svg,CR,a.b,CR,a.b+34);
+      label(svg,CR+10,a.b+21,'repetir (máx. 3 mg)',{anchor:'start',fs:10});
+      var p = box(svg,CR,a.b+34,220,['Persiste sintomático?','Considerar causa:','Mobitz II / BAVT'],{fs:11.5});
+      arrow(svg,CR,p.b,CR,p.b+G);
+      box(svg,CR,p.b+G,220,['Marca-passo transcutâneo','ou dopamina 5–20 mcg/kg/min','ou epinefrina 2–10 mcg/min'],mix(ACC,{fs:11}));
+      finish(svg);
     }
   };
 
@@ -604,33 +610,29 @@
     title: 'Taquicardia',
     note: 'Instabilidade = hipotensão, alteração de consciência, sinais de choque, dor torácica isquêmica, insuficiência cardíaca aguda.',
     build: function(svg){
-      svg.setAttribute('viewBox','0 0 640 440');
-      box(svg,220,10,200,40,'FC > 150/min',{bold:true});
-      arrow(svg,320,50,320,78);
-      box(svg,220,78,200,40,'Instável?',{fs:12});
-      arrow(svg,240,118,140,152);
-      arrow(svg,400,118,500,152);
-      label(svg,190,138,'não',{anchor:'end'});
-      label(svg,450,138,'sim',{anchor:'start',bold:true,color:'var(--alert)'});
-
-      box(svg,400,152,200,44,['Cardioversão','sincronizada'],{fill:'var(--alert-soft)',stroke:'var(--alert)',bold:true});
-      arrow(svg,500,196,500,228);
-      label(svg,500,220,'sem pulso/deteriora →',{fs:9.5});
-      box(svg,400,228,200,36,'tratar como PCR (desfibrilar)',{fill:'var(--alert-soft)',stroke:'var(--alert)',fs:10.5});
-
-      box(svg,40,152,200,40,'QRS estreito ou largo?',{fs:11.5});
-      arrow(svg,100,192,100,224);
-      arrow(svg,180,192,180,224);
-      label(svg,100,214,'estreito',{fs:10,anchor:'middle'});
-      label(svg,180,214,'largo',{fs:10,anchor:'middle'});
-
-      box(svg,20,224,140,56,['Manobra vagal','↓ Adenosina 6→12 mg','(se regular)'],{fs:10.5});
-      box(svg,180,224,160,56,['Considerar','Amiodarona 150mg IV','(se regular, monomórfica)'],{fs:10.5});
-
-      arrow(svg,90,280,90,312);
-      arrow(svg,260,280,260,312);
-      box(svg,20,312,140,40,['Persiste?','avaliar especialista'],{fs:10.5});
-      box(svg,180,312,160,40,['Persiste?','avaliar especialista'],{fs:10.5});
+      var CM=320, G=30, CQ=170, CA=90, CB=250, CR=505;
+      var t = box(svg,CM,6,200,'FC > 150/min',{bold:true});
+      arrow(svg,CM,t.b,CM,t.b+G);
+      var q = box(svg,CM,t.b+G,160,'Instável?',{bold:true});
+      var y = q.b + 46;
+      arrow(svg,q.l+20,q.b,CQ,y); arrow(svg,q.r-20,q.b,CR,y);
+      label(svg,(q.l+20+CQ)/2-8,q.b+24,'não',{anchor:'end'});
+      label(svg,(q.r-20+CR)/2+8,q.b+24,'sim',{anchor:'start',color:'var(--alert)'});
+      // lado instável
+      var cv = box(svg,CR,y,210,['Cardioversão','sincronizada'],mix(ALERT,{bold:true}));
+      arrow(svg,CR,cv.b,CR,cv.b+36);
+      label(svg,CR+10,cv.b+23,'sem pulso / deteriora',{anchor:'start',fs:10});
+      box(svg,CR,cv.b+36,210,'Tratar como PCR (desfibrilar)',mix(ALERT,{fs:11.5}));
+      // lado estável
+      var w = box(svg,CQ,y,230,'QRS estreito ou largo?',{bold:true,fs:11.5});
+      var y2 = w.b + 44;
+      arrow(svg,CQ-40,w.b,CA,y2); arrow(svg,CQ+40,w.b,CB,y2);
+      label(svg,(CQ-40+CA)/2-8,w.b+22,'estreito',{anchor:'end',fs:10});
+      label(svg,(CQ+40+CB)/2+8,w.b+22,'largo',{anchor:'start',fs:10});
+      var r = pair(svg,y2,{cx:CA,w:150,text:['Manobra vagal;','adenosina','6 → 12 mg','(se regular)'],opts:{fs:11}},{cx:CB,w:150,text:['Considerar amiodarona','150 mg IV','(regular e monomórfica)'],opts:{fs:11}});
+      arrow(svg,CA,r.b,CA,r.b+G); arrow(svg,CB,r.b,CB,r.b+G);
+      pair(svg,r.b+G,{cx:CA,w:150,text:['Persiste?','Avaliar especialista'],opts:{fs:11}},{cx:CB,w:150,text:['Persiste?','Avaliar especialista'],opts:{fs:11}});
+      finish(svg);
     }
   };
 
@@ -639,21 +641,21 @@
     title: 'SCA / IAMST',
     note: 'Meta: ECG de 12 derivações em até 10 min da chegada. Tempo porta-balão idealmente < 90 min.',
     build: function(svg){
-      svg.setAttribute('viewBox','0 0 640 400');
-      box(svg,200,10,240,40,'Dor torácica sugestiva de SCA',{bold:true});
-      arrow(svg,320,50,320,78);
-      box(svg,200,78,240,52,['O2 se SatO2<90%, AAS 162–325mg mastigada,','Nitroglicerina SL (se PAS>90, sem PDE-5i),','Morfina se dor refratária'],{fs:10.5});
-      arrow(svg,320,130,320,158);
-      box(svg,200,158,240,36,'ECG de 12 derivações ≤ 10 min',{fs:11});
-      arrow(svg,240,194,140,226);
-      arrow(svg,400,194,500,226);
-      label(svg,190,214,'sem supra',{anchor:'end',fs:10.5});
-      label(svg,450,214,'IAMST (supra ST)',{anchor:'start',fs:10.5,bold:true,color:'var(--alert)'});
-
-      box(svg,20,226,220,44,['Estratificar risco,','heparina/anticoagulação conforme protocolo'],{fs:10.5});
-      box(svg,400,226,200,44,['Ativar equipe de reperfusão'],{fs:11,fill:'var(--alert-soft)',stroke:'var(--alert)',bold:true});
-      arrow(svg,500,270,500,302);
-      box(svg,400,302,200,44,['ICP primária (preferível)','ou fibrinólise se sem acesso a ICP'],{fs:10,fill:'var(--accent-soft)',stroke:'var(--accent)'});
+      var CM=320, G=28, CL=125, CR=510;
+      var t = box(svg,CM,6,280,'Dor torácica sugestiva de SCA',{bold:true});
+      arrow(svg,CM,t.b,CM,t.b+G);
+      var m = box(svg,CM,t.b+G,360,['O₂ se SatO₂ < 90%','AAS 162–325 mg mastigada','Nitroglicerina SL (se PAS > 90 e sem PDE-5i)','Morfina se dor refratária'],{fs:11.5});
+      arrow(svg,CM,m.b,CM,m.b+G);
+      var e = box(svg,CM,m.b+G,280,'ECG de 12 derivações em ≤ 10 min',{fs:11.5});
+      var y = e.b + 50;
+      arrow(svg,e.l+40,e.b,CL,y); arrow(svg,e.r-40,e.b,CR,y);
+      label(svg,(e.l+40+CL)/2-8,e.b+25,'sem supra de ST',{anchor:'end',fs:10.5});
+      label(svg,(e.r-40+CR)/2+8,e.b+25,'IAMST (supra de ST)',{anchor:'start',fs:10.5,color:'var(--alert)'});
+      box(svg,CL,y,230,['Estratificar risco;','heparina/anticoagulação conforme protocolo'],{fs:11.5});
+      var a = box(svg,CR,y,220,'Ativar equipe de reperfusão',mix(ALERT,{bold:true,fs:11.5}));
+      arrow(svg,CR,a.b,CR,a.b+G);
+      box(svg,CR,a.b+G,220,['ICP primária (preferível)','ou fibrinólise se sem acesso a ICP'],mix(ACC,{fs:11}));
+      finish(svg);
     }
   };
 
@@ -662,27 +664,24 @@
     title: 'AVC agudo',
     note: 'Janela para alteplase/rtPA: até 3–4,5h do início dos sintomas em candidatos elegíveis. "Tempo é cérebro."',
     build: function(svg){
-      svg.setAttribute('viewBox','0 0 640 420');
-      box(svg,200,10,240,40,'Sinais de AVC (FAST)',{bold:true});
-      arrow(svg,320,50,320,78);
-      box(svg,200,78,240,40,'Glicemia + TC de crânio sem contraste',{fs:11});
-      arrow(svg,320,118,320,146);
-      box(svg,200,146,240,40,'Hemorragia na TC?',{fs:11.5});
-      arrow(svg,240,186,140,220);
-      arrow(svg,400,186,500,220);
-      label(svg,190,206,'não',{anchor:'end',fs:10.5});
-      label(svg,450,206,'sim',{anchor:'start',fs:10.5,bold:true,color:'var(--alert)'});
-
-      box(svg,400,220,200,44,['AVC hemorrágico:','via neurocirurgia/UTI'],{fs:10.5,fill:'var(--alert-soft)',stroke:'var(--alert)'});
-
-      box(svg,20,220,240,40,'Dentro da janela (≤ 3–4,5h) e elegível?',{fs:10.5});
-      arrow(svg,80,260,80,292);
-      arrow(svg,200,260,200,292);
-      label(svg,80,282,'sim',{fs:10,bold:true,color:'var(--accent)'});
-      label(svg,200,282,'não / contraindicado',{fs:9.5,anchor:'middle'});
-
-      box(svg,0,292,150,44,['Alteplase (rtPA) IV','após checar contraindicações'],{fs:9.8,fill:'var(--accent-soft)',stroke:'var(--accent)'});
-      box(svg,160,292,150,44,['Cuidados de suporte,','considerar trombectomia'],{fs:9.8});
+      var CM=320, G=28, CL=165, CR=510, CA=85, CB=250;
+      var t = box(svg,CM,6,240,'Sinais de AVC (FAST)',{bold:true});
+      arrow(svg,CM,t.b,CM,t.b+G);
+      var gl = box(svg,CM,t.b+G,320,'Glicemia + TC de crânio sem contraste',{fs:11.5});
+      arrow(svg,CM,gl.b,CM,gl.b+G);
+      var h = box(svg,CM,gl.b+G,200,'Hemorragia na TC?',{bold:true});
+      var y = h.b + 50;
+      arrow(svg,h.l+30,h.b,CL,y); arrow(svg,h.r-30,h.b,CR,y);
+      label(svg,(h.l+30+CL)/2-8,h.b+25,'não',{anchor:'end'});
+      label(svg,(h.r-30+CR)/2+8,h.b+25,'sim',{anchor:'start',color:'var(--alert)'});
+      box(svg,CR,y,210,['AVC hemorrágico:','via neurocirurgia/UTI'],mix(ALERT,{fs:11.5}));
+      var j = box(svg,CL,y,290,'Dentro da janela (≤ 3–4,5 h) e elegível?',{fs:11.5});
+      var y2 = j.b + 46;
+      arrow(svg,CL-50,j.b,CA,y2); arrow(svg,CL+50,j.b,CB,y2);
+      label(svg,(CL-50+CA)/2-8,j.b+24,'sim',{anchor:'end',fs:10,color:'var(--accent)'});
+      label(svg,(CL+50+CB)/2+8,j.b+24,'não / contraindicado',{anchor:'start',fs:10});
+      pair(svg,y2,{cx:CA,w:150,text:['Alteplase (rtPA) IV','após checar contraindicações'],opts:mix(ACC,{fs:11})},{cx:CB,w:150,text:['Cuidados de suporte;','considerar trombectomia'],opts:{fs:11}});
+      finish(svg);
     }
   };
 
@@ -706,13 +705,17 @@
     panel.className = 'flow-panel' + (i===0 ? ' active' : '');
     panel.id = 'panel-'+key;
     var svg = svgEl('svg', {});
-    f.build(svg);
+    f.svg = svg; f.build(svg);
     panel.appendChild(svg);
     var note = document.createElement('p');
     note.className = 'flow-note';
     note.textContent = f.note;
     panel.appendChild(note);
     panelsEl.appendChild(panel);
+  });
+
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){
+    order.forEach(function(k){ var f = flows[k]; while (f.svg.firstChild) f.svg.removeChild(f.svg.firstChild); f.svg._maxY = 0; f.build(f.svg); });
   });
 
   // ================= ECG GENERATOR =================
