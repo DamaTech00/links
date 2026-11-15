@@ -1,41 +1,46 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<link rel="icon" href="favicon.svg?v=3" type="image/svg+xml">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#100C2A" />
   <title>SAVC - Meu Locus</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,800;1,800&display=swap" />
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; font-family: Inter, sans-serif; background: #0B0820; color: #EDE6FF; overflow: hidden; }
-    .ml-top { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; background: #100C2A; border-bottom: 1px solid rgba(216,184,255,.1); }
-    .ml-back { color: #D9B8FF; text-decoration: none; font-size: 0.85rem; font-weight: 600; }
-    .ml-brand { font-size: 0.9rem; font-weight: 600; color: #EDE6FF; font-style: italic; }
-    .tabs { display: flex; background: #100C2A; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid rgba(216,184,255,.1); }
-    .tabs::-webkit-scrollbar { display: none; }
-    .tab { flex: 1; text-align: center; padding: 12px 16px; color: rgba(237,230,255,.6); cursor: pointer; white-space: nowrap; font-size: 0.9rem; border-bottom: 2px solid transparent; font-weight: 500; transition: all 0.2s; }
-    .tab:hover { color: #EDE6FF; background: rgba(216,184,255,.05); }
-    .tab.active { color: #D9B8FF; border-bottom: 2px solid #D9B8FF; font-weight: 600; background: rgba(216,184,255,.08); }
-    .content-frame { width: 100%; height: calc(100% - 92px); border: none; display: none; }
-    .content-frame.active { display: block; }
+    html,body{margin:0;padding:0;height:100%}
+    body{display:flex;flex-direction:column;font-family:Inter,sans-serif;color:#EDE6FF;overflow:hidden;
+      background:radial-gradient(760px 300px at 50% -4%,rgba(168,96,216,.28) 0%,rgba(168,96,216,0) 70%),linear-gradient(180deg,#100C2A 0%,#0B0820 100%)}
+    .ml-top{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(216,184,255,.10)}
+    .ml-back{color:#D9B8FF;text-decoration:none;font-size:.9rem;font-weight:600;border:1px solid rgba(216,184,255,.26);border-radius:99px;padding:6px 14px;background:rgba(160,96,216,.10)}
+    .ml-back:hover,.ml-back:focus-visible{background:rgba(160,96,216,.22);outline:none}
+    .ml-brand{font-family:"Playfair Display",Georgia,serif;font-weight:800;font-size:1.15rem;color:#EDE6FF;letter-spacing:-.01em}
+    .ml-brand i{font-style:italic;background:linear-gradient(90deg,#3A5BD0,#A860D8);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.08em}
+    .tabs{flex:0 0 auto;display:flex;gap:8px;padding:10px 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(216,184,255,.10)}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab{flex:0 0 auto;padding:7px 16px;border-radius:99px;border:1px solid rgba(216,184,255,.20);background:rgba(160,96,216,.08);color:rgba(237,230,255,.72);cursor:pointer;white-space:nowrap;font-size:.88rem;font-weight:500;transition:all .15s;user-select:none}
+    .tab:hover:not(.locked){color:#EDE6FF;border-color:#D9B8FF}
+    .tab.active{background:#D9B8FF;color:#0B0820;border-color:#D9B8FF;font-weight:700}
+    .tab.locked{cursor:not-allowed;color:#8A8696;filter:grayscale(1);opacity:.55;background:transparent}
+    .content-frame{flex:1 1 auto;min-height:0;width:100%;border:none;display:none;background:#0B0820}
+    .content-frame.active{display:block}
   </style>
 </head>
 <body>
-  <div class="ml-top">
-    <a class="ml-back" href="./">← biblioteca</a>
-    <span class="ml-brand"><i>meu</i> locus</span>
+  <div class="ml-top"><a class="ml-back" href="./">← biblioteca</a><span class="ml-brand"><i>meu</i> locus</span></div>
+  <div class="tabs" role="tablist">
+    <div class="tab active" role="tab" onclick="switchTab(0)">Guia de Revisão</div>
+    <div class="tab" role="tab" onclick="switchTab(1)">Flashcards</div>
   </div>
-  <div class="tabs">
-    <div class="tab active" onclick="switchTab(0)">Guia de Revisão</div>
-    <div class="tab" onclick="switchTab(1)">Flashcards</div>
-  </div>
-  <iframe class="content-frame active" id="frame-0" src="revisao-savc.html?embed=1"></iframe>
-  <iframe class="content-frame" id="frame-1" src="flashcards-savc.html?embed=1"></iframe>
-  
+  <iframe class="content-frame active" id="frame-0" title="0" src="revisao-savc.html?embed=1"></iframe>
+  <iframe class="content-frame" id="frame-1" title="1" data-src="flashcards-savc.html?embed=1"></iframe>
   <script>
     function switchTab(index) {
-      document.querySelectorAll(".tab").forEach((t, i) => t.classList.toggle("active", i === index));
-      document.querySelectorAll(".content-frame").forEach((f, i) => f.classList.toggle("active", i === index));
+      document.querySelectorAll(".tab").forEach(function (t, i) { t.classList.toggle("active", i === index); });
+      document.querySelectorAll(".content-frame").forEach(function (f, i) {
+        f.classList.toggle("active", i === index);
+        if (i === index && !f.getAttribute("src")) f.setAttribute("src", f.dataset.src);
+      });
     }
   </script>
 </body>

@@ -1,11 +1,12 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+<script>if(self!==top)document.write('<style>.ml-top{display:none!important}</style>')</script>
+<link rel="icon" href="favicon.svg?v=3" type="image/svg+xml">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="GO geral: fluxogramas de mecânica do parto, abdome agudo ginecológico, DMG, hipertensão e mais.">
 <meta name="color-scheme" content="dark">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <title>GO Geral — Fluxogramas · meu locus</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -88,8 +89,8 @@ nav.topics{border-right:1px solid var(--line); padding:18px 12px; position:stick
 @media (max-width:860px){ nav.topics{position:static; height:auto; border-right:none; border-bottom:1px solid var(--line); display:flex; gap:8px; overflow-x:auto; padding:12px 16px} }
 nav.topics .nav-label{font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); padding:0 10px 8px; display:block}
 @media (max-width:860px){ nav.topics .nav-label{display:none} }
-.topic-btn{display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:10px 10px; margin-bottom:2px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--ink-soft); font:inherit; font-size:13.5px; cursor:pointer; white-space:nowrap}
-@media (max-width:860px){ .topic-btn{width:auto; flex:0 0 auto} }
+.topic-btn{display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:10px 10px; margin-bottom:2px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--ink-soft); font:inherit; font-size:13.5px; cursor:pointer; white-space:normal;line-height:1.3}
+@media (max-width:860px){ .topic-btn{width:auto; flex:0 0 auto; white-space:nowrap} }
 .topic-btn .dot{width:9px; height:9px; border-radius:50%; flex:0 0 auto; background:var(--line-strong)}
 .topic-btn:hover{background:var(--surface-2); color:var(--ink)}
 .topic-btn[aria-selected="true"]{background:var(--surface); border-color:var(--line); color:var(--ink); font-weight:600; box-shadow:var(--shadow)}
@@ -191,17 +192,17 @@ footer.page{padding:30px clamp(16px,4vw,40px) 60px; color:var(--ink-faint); font
 
   <nav class="topics" id="topicNav">
     <span class="nav-label">Temas</span>
-    <button class="topic-btn" data-panel="aag" aria-selected="true"><span class="dot"></span>Abdome Agudo em Ginecologia</button>
-    <button class="topic-btn" data-panel="sua" aria-selected="false"><span class="dot"></span>Sangramento Uterino Anormal Agudo</button>
-    <button class="topic-btn" data-panel="mioma" aria-selected="false"><span class="dot"></span>Leiomioma Uterino (Mioma)</button>
-    <button class="topic-btn" data-panel="part" aria-selected="false"><span class="dot"></span>Partograma & Mecânica do Parto</button>
-    <button class="topic-btn" data-panel="pex" aria-selected="false"><span class="dot"></span>Assistência no Período Expulsivo</button>
-    <button class="topic-btn" data-panel="dheg" aria-selected="false"><span class="dot"></span>Hipertensão na Gestação & Puerpério</button>
-    <button class="topic-btn" data-panel="dmg" aria-selected="false"><span class="dot"></span>Diabetes Mellitus Gestacional</button>
-    <button class="topic-btn" data-panel="dop" aria-selected="false"><span class="dot"></span>Dopplerfluxometria</button>
-    <button class="topic-btn" data-panel="aneu" aria-selected="false"><span class="dot"></span>Marcadores de Aneuploidia</button>
-    <button class="topic-btn" data-panel="puerp" aria-selected="false"><span class="dot"></span>Puerpério Normal &amp; Patológico</button>
-    <button class="topic-btn" data-panel="vsex" aria-selected="false"><span class="dot"></span>Violência Sexual no PS</button>
+    <button class="topic-btn" data-panel="aag" aria-selected="true"><span class="dot"></span>Abdome agudo GO</button>
+    <button class="topic-btn" data-panel="sua" aria-selected="false"><span class="dot"></span>Sangramento uterino</button>
+    <button class="topic-btn" data-panel="mioma" aria-selected="false"><span class="dot"></span>Mioma uterino</button>
+    <button class="topic-btn" data-panel="part" aria-selected="false"><span class="dot"></span>Partograma</button>
+    <button class="topic-btn" data-panel="pex" aria-selected="false"><span class="dot"></span>Período expulsivo</button>
+    <button class="topic-btn" data-panel="dheg" aria-selected="false"><span class="dot"></span>Hipertensão (DHEG)</button>
+    <button class="topic-btn" data-panel="dmg" aria-selected="false"><span class="dot"></span>Diabetes gestacional</button>
+    <button class="topic-btn" data-panel="dop" aria-selected="false"><span class="dot"></span>Doppler</button>
+    <button class="topic-btn" data-panel="aneu" aria-selected="false"><span class="dot"></span>Aneuploidias</button>
+    <button class="topic-btn" data-panel="puerp" aria-selected="false"><span class="dot"></span>Puerpério</button>
+    <button class="topic-btn" data-panel="vsex" aria-selected="false"><span class="dot"></span>Violência sexual</button>
   </nav>
 
   <main id="main">

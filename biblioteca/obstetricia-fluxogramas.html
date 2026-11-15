@@ -1,11 +1,12 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+<script>if(self!==top)document.write('<style>.ml-top{display:none!important}</style>')</script>
+<link rel="icon" href="favicon.svg?v=3" type="image/svg+xml">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Fluxogramas de Obstetrícia: etiologia, clínica, diagnóstico e conduta.">
 <meta name="color-scheme" content="dark">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <title>Fluxogramas de Obstetrícia · meu locus</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -144,7 +145,7 @@ nav.topics .nav-label{font-size:10.5px; letter-spacing:.1em; text-transform:uppe
   font:inherit; font-size:13.5px; cursor:pointer;
   white-space:nowrap;
 }
-@media (max-width:860px){ .topic-btn{width:auto; flex:0 0 auto} }
+@media (max-width:860px){ .topic-btn{width:auto; flex:0 0 auto; white-space:nowrap} }
 .topic-btn .dot{width:9px; height:9px; border-radius:50%; flex:0 0 auto; background:var(--line-strong)}
 .topic-btn:hover{background:var(--surface-2); color:var(--ink)}
 .topic-btn[aria-selected="true"]{background:var(--surface); border-color:var(--line); color:var(--ink); font-weight:600; box-shadow:var(--shadow)}
@@ -283,16 +284,16 @@ footer.page a{color:inherit; text-decoration:underline}
 
   <nav class="topics" id="topicNav">
     <span class="nav-label">Temas</span>
-    <button class="topic-btn" data-panel="pe" aria-selected="true"><span class="dot"></span>Síndromes Hipertensivas · PE / Eclâmpsia / HELLP</button>
-    <button class="topic-btn" data-panel="rcf" aria-selected="false"><span class="dot"></span>Restrição de Crescimento Fetal</button>
-    <button class="topic-btn" data-panel="rpm" aria-selected="false"><span class="dot"></span>Rotura Prematura de Membranas</button>
+    <button class="topic-btn" data-panel="pe" aria-selected="true"><span class="dot"></span>Pré-eclâmpsia / HELLP</button>
+    <button class="topic-btn" data-panel="rcf" aria-selected="false"><span class="dot"></span>Restrição de crescimento</button>
+    <button class="topic-btn" data-panel="rpm" aria-selected="false"><span class="dot"></span>Rotura de membranas</button>
     <button class="topic-btn" data-panel="ppt" aria-selected="false"><span class="dot"></span>Prematuridade</button>
-    <button class="topic-btn" data-panel="hpp" aria-selected="false"><span class="dot"></span>Hemorragia Pós-Parto</button>
-    <button class="topic-btn" data-panel="drogas" aria-selected="false"><span class="dot"></span>Uso de Substâncias na Gestação</button>
-    <button class="topic-btn" data-panel="dmg" aria-selected="false"><span class="dot"></span>Diabetes Mellitus Gestacional</button>
-    <button class="topic-btn" data-panel="rastreio1tri" aria-selected="false"><span class="dot"></span>Rastreamento de Aneuploidias — 1º Trimestre</button>
-    <button class="topic-btn" data-panel="mecparto" aria-selected="false"><span class="dot"></span>Mecanismo de Parto &amp; Partograma</button>
-    <button class="topic-btn" data-panel="mioma" aria-selected="false"><span class="dot"></span>Leiomioma Uterino</button>
+    <button class="topic-btn" data-panel="hpp" aria-selected="false"><span class="dot"></span>Hemorragia pós-parto</button>
+    <button class="topic-btn" data-panel="drogas" aria-selected="false"><span class="dot"></span>Substâncias na gestação</button>
+    <button class="topic-btn" data-panel="dmg" aria-selected="false"><span class="dot"></span>Diabetes gestacional</button>
+    <button class="topic-btn" data-panel="rastreio1tri" aria-selected="false"><span class="dot"></span>Rastreio 1º trimestre</button>
+    <button class="topic-btn" data-panel="mecparto" aria-selected="false"><span class="dot"></span>Mecanismo de parto</button>
+    <button class="topic-btn" data-panel="mioma" aria-selected="false"><span class="dot"></span>Mioma uterino</button>
   </nav>
 
   <main id="main">
