@@ -279,9 +279,9 @@ function pacPanel(){
   pp.querySelectorAll("[data-com]").forEach(b=>b.onclick=()=>{const k=b.dataset.com;P.com.has(k)?P.com.delete(k):P.com.add(k);mudou()});
   const bind=(id,key,full)=>{const el=$(id);if(el)el.addEventListener("change",()=>{P[key]=el.value;if(key==="dum"&&el.value&&P.gest==="")P.gest="sim";mudou(full)})};
   [["#p-idade","idade"],["#p-unid","unid"],["#p-peso","peso"],["#p-alt","altura"],["#p-sexo","sexo",1],["#p-gest","gest"],["#p-dum","dum"],["#p-cr","cr"],["#p-pas","pas"],["#p-pad","pad"],["#p-fc","fc"],["#p-fr","fr"],["#p-spo2","spo2"],["#p-temp","temp"],["#p-glic","glic"]].forEach(([i,k,f])=>bind(i,k,f));
-  $("#p-novo").onclick=()=>{P=P0();F={};AF={};mudou(true)};
+  $("#p-novo").onclick=()=>{P=P0();F={};AF={};dockNovo();mudou(true)};
 }
-function mudou(lst){rx=null;pacPanel();if(location.hash.slice(1)==="atendimento"||!location.hash){atendV();return}
+function mudou(lst){rx=null;pacPanel();if(typeof dockRefresh==="function")dockRefresh();if(location.hash.slice(1)==="atendimento"||!location.hash){atendV();return}
   if(lst)lista($("#busca").value);if(atual&&!location.hash.startsWith("#m-")){if(!visivel(atual))atual=D.queixas.find(visivel);ficha(atual)}}
 
 function bloqueio(k){const r=[];for(const [c,ks] of Object.entries(D.alergia))if(P.alg.has(c)&&ks.includes(k))r.push({c:"c-bad",t:"alergia a "+ALG[c]});
@@ -360,11 +360,12 @@ function pedDose(d){const w=num(P.peso);const m=idadeMeses();
   return{dose,vol}}
 function pedHTML(q){const ids=(D.pedMap[q.id]||[]);const meds=ids.map(id=>D.ped.find(d=>d.id===id)).filter(Boolean);
   const rows=meds.map(d=>{const r=pedDose(d);return `<tr${r.bad?' class="bad"':""}><td>${esc(d.n)}</td><td class="num">${esc(r.dose)}</td><td class="num">${esc(r.vol)}</td><td>${esc((d.freq?d.freq+". ":"")+(d.obs||""))}</td></tr>`}).join("");
-  return `<section class="pedb"><div class="rxhead"><h2>Criança — doses para ${num(P.peso)?esc(P.peso)+" kg":"o peso informado"}</h2>${meds.length?'<button type="button" id="copiarPed">Copiar receita pediátrica</button>':""}</div>
+  return `<section class="pedb"><div class="rxhead"><h2>Criança — doses para ${num(P.peso)?esc(P.peso)+" kg":"o peso informado"}</h2>${meds.length?'<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" id="copiarPed">Copiar receita pediátrica</button><button type="button" class="ghost" id="pedToDock">Enviar ao prontuário →</button></div>':""}</div>
    ${D.pedNota[q.id]?`<p class="nota" style="margin:0 0 10px">${esc(D.pedNota[q.id])}</p>`:""}
    ${meds.length?`<div class="tbl"><table><thead><tr><th>Medicamento</th><th>Dose</th><th>Volume</th><th>Intervalo / obs.</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="empty">Sem tabela pediátrica para esta queixa.</p>'}
    <p class="src">Confira concentração do frasco disponível e idade mínima. Gotejador: use seringa na dúvida.</p></section>`}
 
+function exList(a){return a&&a.length?"<ul>"+a.map(x=>`<li>${esc(x)} <button type="button" class="ghost mini" data-ex="${esc(x)}">+ pedir</button></li>`).join("")+"</ul>":'<p class="empty">—</p>'}
 /* ---------- ficha ---------- */
 function ficha(q){
   if(!atual||q.id!==atual.id){rx=null;abertos=new Set();fluxState={}}
@@ -387,7 +388,7 @@ function ficha(q){
   const calcs=(q.calcs||[]).map(([id,uso])=>{const c=D.calc.find(x=>x.id===id);return c?calcHTML(c,uso):""}).join("");
   const fluxos=(q.flux||[]).filter(k=>D.flux[k]).map(fluxHTML).join("");
   const rxAdulto=`<section class="rx"><div class="rxhead"><h2>Receita de alta</h2>
-      ${q.alta.length?'<div style="display:flex;gap:8px;flex-wrap:wrap"><button id="copiar">Copiar receita</button><button class="ghost" id="copiarTudo">Copiar receita + orientações</button></div>':""}</div>
+      ${q.alta.length?'<div style="display:flex;gap:8px;flex-wrap:wrap"><button id="copiar">Copiar receita</button><button class="ghost" id="copiarTudo">Copiar receita + orientações</button><button class="ghost" id="rxToDock">Enviar ao prontuário →</button></div>':""}</div>
       ${q.alta.length?itens:`<p class="empty">${q.soPed?"Use as doses por peso acima.":"Sem receita padrão: depende da causa definida."}</p>`}
       <textarea id="fallback" hidden aria-label="Texto da receita"></textarea></section>`;
   $("#ficha").innerHTML=`
@@ -405,7 +406,7 @@ function ficha(q){
       ${calcs?`<div class="step"><span class="n">3</span><div><b>Escores</b><div class="inl">${calcs}</div></div></div>`:""}
       ${fluxos?`<div class="step"><span class="n">${calcs?4:3}</span><div><b>Fluxograma</b><div class="inl">${fluxos}</div></div></div>`:""}
       ${q.tipo==="sintoma"&&q.discrim&&q.discrim.length?`<div class="step"><span class="n">→</span><div><b>O que você achou → o que é → onde está a conduta</b><div class="tbl"><table class="an"><thead><tr><th>Achado</th><th>Pense em</th><th></th></tr></thead><tbody>${q.discrim.map(([a,h,l])=>`<tr><td>${esc(a)}</td><td>${esc(h)}</td><td>${l?`<a class="go" href="#${l==="sala"?"m-sala-vermelha":l}">${l==="sala"?"Sala vermelha":"Conduta →"}</a>`:""}</td></tr>`).join("")}</tbody></table></div></div></div>`:""}
-      <div class="step"><span class="n">→</span><div><b>Exames complementares, se houver</b>${ul(q.exames)}</div></div>
+      <div class="step"><span class="n">→</span><div><b>Exames complementares, se houver</b>${exList(q.exames)}</div></div>
       <div class="step"><span class="n">→</span><div><b>${q.tipo==="sintoma"?"Medidas iniciais (antes de definir a causa)":"Prescrição agora, na UPA"}</b>${ul(q.agora.concat(q.upa))}</div></div>
       ${q.reav?`<div class="step"><span class="n">→</span><div class="reav"><b>Reavaliar</b><br>${esc(q.reav)}</div></div>`:""}
     </section>
@@ -413,7 +414,7 @@ function ficha(q){
     ${ped?((D.pedMap[q.id]||[]).length||D.pedNota[q.id]?pedHTML(q):""):(q.tipo==="diagnostico"||q.alta.length?rxAdulto:"")}
     ${q.estilo&&q.estilo.length?`<section class="estilo"><h2>Estilo de vida — o que o paciente quase nunca faz</h2>${ul(q.estilo)}</section>`:""}
     ${q.orient?`<section class="orient"><h2>Orientações e retorno</h2><p style="margin:0">${esc(q.orient)}</p></section>`:""}
-    ${q.tipo==="diagnostico"&&!ped?`<section class="card"><h2 style="margin:0 0 8px">Documentos</h2><div class="flow-b"><button type="button" id="fichaCarta">Copiar carta para UBS</button><button type="button" class="ghost" id="fichaEvol">Copiar evolução</button></div><p class="src">Usa os dados da ficha do paciente; nome e CPF ficam como [NOME] e 000.000.000-00 para você substituir.</p></section>`:""}
+    ${q.tipo==="diagnostico"&&!ped?`<section class="card"><h2 style="margin:0 0 8px">Documentos</h2><div class="flow-b"><button type="button" id="fichaCarta">Gerar carta para UBS no prontuário</button><button type="button" class="ghost" id="fichaEvol">Gerar evolução no prontuário</button></div><p class="src">Aparecem no painel Prontuário, já com a anamnese e os dados do paciente. Nome e CPF ficam como [NOME] e 000.000.000-00.</p></section>`:""}
     <p class="src"><b>Fontes:</b> ${q.fontes.map(esc).join(" · ")}</p>
     <p class="disc">${esc(D.aviso)} Itens fora da REMUME ou bloqueados pelo perfil do paciente vêm desmarcados.</p>`;
   marcarLista();prefill();calcUpd();fluxBind();
@@ -422,7 +423,12 @@ function ficha(q){
   document.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>{const [i,j]=b.dataset.swap.split(":").map(Number);const cur=rx[i];const x=cur.alts[j];
     const orig=cur.orig?cur.origItem:cur;rx[i]=Object.assign({},x,{alts:orig.alts,orig:orig.med,origItem:orig});abertos.delete(i);ficha(atual)});
   document.querySelectorAll("[data-undo]").forEach(a=>a.onclick=e=>{e.preventDefault();const i=+a.dataset.undo;rx[i]=rx[i].origItem;ficha(atual)});
-  const bc=$("#fichaCarta"),be=$("#fichaEvol");if(bc)bc.onclick=()=>{finalDx=q.id;destino="ubs";copiar(carta())};if(be)be.onclick=()=>{finalDx=q.id;copiar(evolucao())};
+  const bc=$("#fichaCarta"),be=$("#fichaEvol");const abre=id=>{finalDx=q.id;destino="ubs";dirty.carta=dirty.evo=false;window.dockOpen(true);dockRefresh();const b=$("#box-"+id);if(b){b.open=true;b.scrollIntoView({block:"start"})}};
+  if(bc)bc.onclick=()=>abre("carta");if(be)be.onclick=()=>abre("evo");
+  const rb=$("#rxToDock");if(rb)rb.onclick=()=>{const its=[...document.querySelectorAll(".item input:checked")].map(c=>rx[+c.dataset.i]);if(!its.length){toast("Marque ao menos um item");return}its.forEach(a=>addRx(a.med+" — "+a.pos));toast("Prescrição no prontuário")};
+  const pb=$("#pedToDock");if(pb)pb.onclick=()=>{textoPed().split("\n").filter(l=>/^\d+\. /.test(l)).forEach(l=>addRx(l.replace(/^\d+\. /,"")));toast("Prescrição no prontuário")};
+  document.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>addEx(b.dataset.ex));
+  dockRefresh();
   const b1=$("#copiar"),b2=$("#copiarTudo"),b3=$("#copiarPed");if(b1)b1.onclick=()=>copiar(texto(false));if(b2)b2.onclick=()=>copiar(texto(true));if(b3)b3.onclick=()=>copiar(textoPed());
 }
 function texto(comOrient){const its=[...document.querySelectorAll('.item input:checked')].map(c=>rx[+c.dataset.i]);
@@ -431,8 +437,8 @@ function texto(comOrient){const its=[...document.querySelectorAll('.item input:c
 function textoPed(){const ids=D.pedMap[atual.id]||[];const ls=ids.map(id=>D.ped.find(d=>d.id===id)).filter(Boolean).map(d=>{const r=pedDose(d);return r.bad?null:`${d.n}: ${r.vol||r.dose}${r.vol&&r.dose!=="—"?" ("+r.dose+")":""} — ${d.freq||""}`}).filter(Boolean);
   return `Criança, ${P.idade||"?"} ${P.unid}, ${P.peso||"?"} kg\n\n`+ls.map((l,i)=>`${i+1}. ${l}`).join("\n")+"\n\nOrientações: "+atual.orient}
 function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,1800)}
-function copiar(t){const fb=$("#fallback")||document.createElement("textarea");
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>toast("Copiado"),()=>{fb.hidden=false;fb.value=t;fb.select();toast("Selecione e copie o texto")})}
+function copiar(t,msg){const fb=$("#fallback")||document.createElement("textarea");
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>toast(msg||"Copiado"),()=>{fb.hidden=false;fb.value=t;fb.select();toast("Selecione e copie o texto")})}
   else{fb.hidden=false;fb.value=t;fb.select()}}
 
 /* ---------- atendimento guiado ---------- */
@@ -486,16 +492,16 @@ function atendV(){
       <div class="card"><label>Diagnóstico final <select id="at-dx">${D.queixas.filter(q=>q.tipo==="diagnostico"&&!q.soPed).map(q=>`<option value="${q.id}"${linkDe(finalDx)===q.id?" selected":""}>${esc(q.titulo)}</option>`).join("")}</select></label>
         <label style="margin-left:12px">Destino <select id="at-dest"><option value="ubs"${destino==="ubs"?" selected":""}>Alta com seguimento na UBS</option><option value="obs"${destino==="obs"?" selected":""}>Observação na UPA</option><option value="transf"${destino==="transf"?" selected":""}>Transferência/regulação</option></select></label>
         ${destino==="ubs"&&pend.length?`<div class="alarm" style="margin-top:10px"><b>Antes da alta, registre como afastou:</b> ${pend.map(x=>esc(x.k.n)).join(", ")}</div>`:""}
-        <div class="flow-b" style="margin-top:10px"><button type="button" id="at-carta">Copiar carta para UBS</button><button type="button" class="ghost" id="at-evol">Copiar evolução</button><button type="button" class="ghost" id="at-abrir">Abrir conduta e receita</button></div>
-        <textarea id="at-txt" readonly aria-label="Texto gerado"></textarea></div>
+        <div class="flow-b" style="margin-top:10px"><button type="button" id="at-abrir">Abrir conduta e receita</button><button type="button" class="ghost" id="at-pront">Abrir prontuário →</button></div>
+        <p class="src" style="margin-top:8px">Anamnese, evolução, exames, prescrição, carta para UBS e encaminhamento ficam no painel <b>Prontuário</b>, ao lado.</p></div>
     </section></div>`;
   vw.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{const f=b.dataset.f,v=+b.dataset.v;F[f]=F[f]===v?undefined:v;if(F[f]===undefined)delete F[f];finalDx=null;atendV()});
   vw.querySelectorAll("[data-af]").forEach(s0=>s0.onchange=()=>{AF[s0.dataset.af]=s0.value||undefined;atendV()});
   $("#at-limpa").onclick=()=>{F={};AF={};finalDx=null;atendV()};
   $("#at-dx").onchange=e=>{finalDx=e.target.value;atendV()};$("#at-dest").onchange=e=>{destino=e.target.value;atendV()};
-  $("#at-carta").onclick=()=>{const t=carta();$("#at-txt").value=t;copiar(t)};$("#at-evol").onclick=()=>{const t=evolucao();$("#at-txt").value=t;copiar(t)};
+  $("#at-pront").onclick=()=>window.dockOpen(true);
   $("#at-abrir").onclick=()=>{location.hash="#"+linkDe(finalDx)};
-  prefill();calcUpd();vw.querySelectorAll("[data-c]").forEach(e=>e.addEventListener("input",calcUpd));
+  prefill();calcUpd();vw.querySelectorAll("[data-c]").forEach(e=>e.addEventListener("input",calcUpd));dirty.evo=dirty.evo&&false;dockRefresh();
 }
 function linkDe(id){if(!id)return"";const h=D.hip[id];if(h&&h[1]&&h[1]!=="sala")return h[1];return D.queixas.some(q=>q.id===id)?id:"sindrome-gripal"}
 function resumoPac(){const a=idadeAnos();const sx=P.sexo==="F"?"feminino":P.sexo==="M"?"masculino":"sexo não informado";
@@ -507,7 +513,7 @@ function achadosTxt(v){return Object.entries(F).filter(([f,x])=>x===v).map(([f])
 function algTxt(){return P.alg.size?"Alergia a "+[...P.alg].map(k=>ALG[k]).join(", "):P.algNega?"Nega alergias":P.algNS?"Desconhece alergias":"Alergias não informadas"}
 function grupoRisco(){const a=idadeAnos(),w=num(P.peso),h=num(P.altura);return gestSim()||(a!==null&&(a>=60||a<5))||["dpoc","asma","ic","dac","dm","drc","imuno","hepato","cancer"].some(k=>P.com.has(k))||(w&&h&&w/Math.pow(h/100,2)>=40)}
 function rxPadrao(q){if(!q||!q.alta)return[];return q.alta.filter(a=>!bloqueio(a.k).some(b=>b.c==="c-bad")&&status(a.k).c!=="c-warn"&&!(/só grupo de risco/.test(a.pos)&&!grupoRisco())).map(a=>`${a.med} — ${a.pos}`)}
-function carta(){const q=D.queixas.find(x=>x.id===linkDe(finalDx));const hoje=new Date().toLocaleDateString("pt-BR");const ks=killers();
+function carta(){const q=dxQ();const hoje=new Date().toLocaleDateString("pt-BR");const ks=killers();
   const dest={ubs:"Alta da UPA com seguimento na UBS",obs:"Mantido(a) em observação na UPA",transf:"Encaminhado(a) para serviço de referência via regulação"}[destino];
   return `ENCAMINHAMENTO / CONTRARREFERÊNCIA PARA A UBS
 Data: ${hoje}
@@ -515,19 +521,19 @@ Data: ${hoje}
 Paciente: [NOME DO PACIENTE]
 CPF: 000.000.000-00   Cartão SUS: [CNS]
 Dados: ${resumoPac()}
-${algTxt()}. Histórico: ${[...P.com].map(k=>D.hist[k]||k).join(", ")||"sem comorbidades referidas"}.
+${algFull()||algTxt()}. AP: ${apTxt()||"sem comorbidades referidas"}.${afFull()?" AF: "+afFull()+".":""}
 
 Prezado(a) colega da Unidade Básica de Saúde,
 
 Atendi o(a) paciente acima na UPA nesta data.
-Queixa e achados: ${achadosTxt(1)||"—"}.
+Queixa: ${qpQd()||"—"}. Achados: ${achadosTxt(1)||"—"}.
 Negava: ${achadosTxt(0)||"—"}.
 Sinais vitais: ${svTxt()}.
 Condições graves avaliadas e afastadas: ${ks.filter(x=>x.feito).map(x=>x.k.n+" ("+x.feito+")").join("; ")||"—"}.
 
 Hipótese diagnóstica: ${q?q.titulo:"—"}.
 Conduta na UPA: ${q&&q.agora?q.agora.slice(0,3).join("; "):"—"}.
-Prescrição de alta: ${rxPadrao(q).join("; ")||"conforme receita anexa"}.
+Prescrição de alta: ${rxTxt(q)||"conforme receita anexa"}.
 Desfecho: ${dest}.
 
 Solicito: ${D.ubs[linkDe(finalDx)]||"avaliação e seguimento em consulta."}
@@ -537,12 +543,6 @@ Paciente orientado(a) sobre sinais de alarme e retorno imediato à UPA se: ${q&&
 Atenciosamente,
 [Nome do médico] — CRM-SP [número]
 UPA [nome da unidade]`}
-function evolucao(){const q=D.queixas.find(x=>x.id===linkDe(finalDx));const ks=killers();
-  return `S: ${resumoPac()}. ${algTxt()}. Histórico: ${[...P.com].map(k=>D.hist[k]||k).join(", ")||"nega comorbidades"}. Refere: ${achadosTxt(1)||"—"}. Nega: ${achadosTxt(0)||"—"}.
-O: ${svTxt()}.
-A: ${q?q.titulo:"—"}. Diagnósticos de risco considerados: ${ks.map(x=>x.k.n+(x.feito?" — afastado: "+x.feito:" — não afastado")).join("; ")||"—"}.
-P: ${q&&q.agora?q.agora.join("; "):"—"}. Prescrição de alta: ${rxPadrao(q).join("; ")||"—"}. ${destino==="ubs"?"Alta com encaminhamento para UBS.":destino==="obs"?"Mantido em observação com reavaliação seriada.":"Solicitada regulação/transferência."}
-Orientado(a) sobre sinais de alarme (${q&&q.orient?q.orient:"piora"}) e retorno imediato se presentes; compreendeu e concorda.`}
 
 /* ---------- módulos ---------- */
 const mod=$("#mod");
@@ -564,8 +564,169 @@ function rota(){const h=location.hash.slice(1)||"atendimento";
   if(!isMod&&!isAt&&h!=="queixas"&&innerWidth<760)$("#ficha").scrollIntoView();else window.scrollTo({top:0})}
 $("#busca").addEventListener("input",e=>{const f=lista(e.target.value);if(f&&e.target.value)ficha(f)});
 sel.addEventListener("change",()=>{store.set("mun",sel.value);if(atual)ficha(atual)});
+/* ---------- PRONTUÁRIO: bloco de notas lateral (anamnese, evolução, exames, prescrição, carta, encaminhamento) ---------- */
+const A0=()=>({qp:"",qdN:"",qdU:"dias",inicio:"",curso:"",fatores:"",automed:"",hma:"",isda:"",apNega:false,ap:"",meds:"",medsNega:false,cirurg:"",cirNega:false,hab:new Set(),algOutras:"",afNega:false,af:new Set(),afTxt:"",exame:""});
+let A=A0(),X=[],RXD=[],dirty={evo:false,carta:false,enc:false};
+const HAB={tab:"Tabagismo",etil:"Etilismo",drog:"Drogas ilícitas",sed:"Sedentarismo"};
+const AFS={has:"HAS",dm:"DM",iam:"IAM/DAC precoce",avc:"AVC",ca:"Câncer",tev:"TVP/TEP",resp:"Asma/DPOC",rim:"Doença renal"};
+const INI={subito:"início súbito",gradual:"início gradual"};
+const CUR={piora:"com piora progressiva",melhora:"com melhora",estavel:"quadro estável",oscila:"quadro intermitente"};
+const UNI={horas:["hora","horas"],dias:["dia","dias"],semanas:["semana","semanas"],meses:["mês","meses"]};
+const EXQ=["ECG","Rx de tórax","Hemograma","PCR","Ureia e creatinina","Eletrólitos","Glicemia capilar","EAS/urina","β-hCG","Troponina","Gasometria","USG"];
+const T=s=>(s||"").trim();
+const posF=()=>Object.entries(F).filter(([f,x])=>x===1).map(([f])=>D.feat[f][0].toLowerCase());
+const negF=()=>Object.entries(F).filter(([f,x])=>x===0).map(([f])=>D.feat[f][0].toLowerCase());
+const qdTxt=()=>{const n=num(A.qdN);return n===null?"":"há "+T(A.qdN)+" "+UNI[A.qdU][n===1?0:1]};
+const qpTxt=()=>T(A.qp)||posF()[0]||"";
+const qpQd=()=>[qpTxt(),qdTxt()].filter(Boolean).join(" ");
+function hmaTxt(){const p=[],q=qpTxt().toLowerCase();const ci=[INI[A.inicio],CUR[A.curso]].filter(Boolean).join(", ");if(ci)p.push(ci[0].toUpperCase()+ci.slice(1));
+  const out=posF().filter(x=>x!==q);if(out.length)p.push("Associado a: "+out.join(", "));
+  if(T(A.fatores))p.push("Piora/melhora com: "+T(A.fatores));if(T(A.automed))p.push("Medicação já usada para o quadro: "+T(A.automed));if(T(A.hma))p.push(T(A.hma));return p.join(". ")}
+function isdaTxt(){const t=[],n=negF();if(n.length)t.push("nega "+n.join(", "));if(T(A.isda))t.push(T(A.isda));return t.join(". ")}
+function apTxt(){const p=[],cm=[...P.com].map(k=>D.hist[k]||k);if(cm.length)p.push("Comorbidades: "+cm.join(", "));else if(A.apNega)p.push("nega comorbidades");
+  if(T(A.ap))p.push(T(A.ap));if(A.hab.size)p.push("Hábitos: "+[...A.hab].map(k=>HAB[k]).join(", "));return p.join(". ")}
+const medsTxt=()=>A.medsNega?"nega uso contínuo":T(A.meds);
+const cirTxt=()=>A.cirNega?"nega":T(A.cirurg);
+function algFull(){const b=(P.alg.size||P.algNega||P.algNS)?algTxt():"";return [b,T(A.algOutras)?"outras: "+T(A.algOutras):""].filter(Boolean).join("; ")}
+function afFull(){return A.afNega?"sem antecedentes relevantes":[...[...A.af].map(k=>AFS[k]),T(A.afTxt)].filter(Boolean).join(", ")}
+const svOk=()=>!!(P.pas||P.fc||P.fr||P.spo2||P.temp||P.glic);
+function dxQ(){const h=location.hash.slice(1);if(atual&&atual.tipo==="diagnostico"&&h&&h!=="atendimento"&&!h.startsWith("m-"))return atual;return D.queixas.find(x=>x.id===linkDe(finalDx))}
+function faltas(){const e=[],r=[],ks=killers();
+  if(!qpTxt())e.push(["a-qp","queixa principal"]);if(num(A.qdN)===null)e.push(["a-qdn","duração (QD)"]);
+  if(idadeAnos()===null)e.push(["p-idade","idade"]);if(!P.sexo)e.push(["p-sexo","sexo"]);
+  if(!(P.alg.size||P.algNega||P.algNS)&&!T(A.algOutras))e.push(["d-alg","alergias"]);
+  if(num(P.pas)===null)e.push(["p-pas","PA"]);if(num(P.fc)===null)e.push(["p-fc","FC"]);if(num(P.spo2)===null)e.push(["p-spo2","SpO₂"]);
+  if(P.modo==="adulto"&&gestTalvez()&&P.gest!=="sim"&&P.gest!=="nao"&&P.gest!=="naosei")e.push(["p-gest","gestação (DUM)"]);
+  ks.filter(x=>x.agora&&!x.feito).forEach(x=>e.push(["kill","afastar: "+x.k.n]));
+  if(num(P.temp)===null)r.push(["p-temp","temperatura"]);if(num(P.fr)===null)r.push(["p-fr","FR"]);
+  if(!hmaTxt())r.push(["a-hma","HMA (início, evolução)"]);if(!isdaTxt())r.push(["a-isda","ISDA"]);
+  if(!apTxt())r.push(["d-com","antecedentes (AP)"]);if(!medsTxt())r.push(["a-meds","medicações de uso contínuo"]);if(!cirTxt())r.push(["a-cir","cirurgias prévias"]);
+  if(!afFull())r.push(["a-af","antecedentes familiares"]);if(!T(A.exame))r.push(["a-exame","exame físico"]);
+  return{e,r}}
+const rxTxt=q=>RXD.join("; ");
+function evolucao(){const q=dxQ(),ks=killers(),PH=t=>`[PREENCHER: ${t}]`,L=[];
+  L.push(`Paciente ${resumoPac()}.`);L.push(`QP: ${qpTxt()||PH("queixa principal")}`);L.push(`QD: ${qdTxt()||PH("há quanto tempo")}`);
+  const h=hmaTxt();if(h)L.push("HMA: "+h+".");const i=isdaTxt();if(i)L.push("ISDA: "+i+".");
+  const ap=apTxt();if(ap)L.push("AP: "+ap+".");if(medsTxt())L.push("Medicações de uso contínuo: "+medsTxt()+".");if(cirTxt())L.push("Cirurgias/internações prévias: "+cirTxt()+".");
+  L.push((algFull()||PH("alergias"))+".");const af=afFull();if(af)L.push("AF: "+af+".");
+  L.push("Exame físico/SSVV: "+(svOk()?svTxt():PH("sinais vitais"))+(T(A.exame)?". "+T(A.exame):"")+".");
+  L.push(`A: ${q?q.titulo:"—"}. Diagnósticos de risco considerados: ${ks.map(x=>x.k.n+(x.feito?" — afastado: "+x.feito:" — não afastado")).join("; ")||"—"}.`);
+  if(X.length)L.push("Exames solicitados: "+X.join("; ")+".");
+  L.push(`P: ${q&&q.agora?q.agora.join("; "):"—"}. Prescrição: ${rxTxt(q)||"—"}. ${destino==="ubs"?"Alta com encaminhamento para UBS.":destino==="obs"?"Mantido em observação com reavaliação seriada.":"Solicitada regulação/transferência."}`);
+  L.push(`Orientado(a) sobre sinais de alarme (${q&&q.orient?q.orient:"piora"}) e retorno imediato se presentes; compreendeu e concorda.`);return L.join("\n")}
+function encam(){const q=dxQ(),hoje=new Date().toLocaleDateString("pt-BR"),PH=t=>`[PREENCHER: ${t}]`;
+  return `SOLICITAÇÃO DE REGULAÇÃO / TRANSFERÊNCIA
+Data: ${hoje}
+
+Paciente: [NOME DO PACIENTE]
+CPF: 000.000.000-00   Cartão SUS: [CNS]
+Dados: ${resumoPac()}
+${algFull()||"Alergias não informadas"}. AP: ${apTxt()||"não informados"}.
+
+Hipótese diagnóstica: ${q?q.titulo:PH("hipótese")}.
+Motivo da transferência: ${PH("ex.: necessidade de leito de UTI / avaliação da especialidade / exame não disponível na UPA")}
+Resumo do caso: ${qpQd()||PH("queixa e duração")}. ${hmaTxt()?hmaTxt()+".":""}
+Achados: ${achadosTxt(1)||"—"}. Sinais vitais: ${svTxt()}.${T(A.exame)?"\nExame físico: "+T(A.exame)+".":""}
+Condutas já realizadas na UPA: ${[X.length?"exames: "+X.join(", "):"",RXD.length?"prescrição: "+RXD.join(", "):""].filter(Boolean).join(". ")||PH("condutas")}
+Condição no momento da solicitação: ${PH("estabilidade, via aérea, suporte em uso")}
+Serviço/vaga de destino: ${PH("serviço e contato da regulação")}
+
+[Nome do médico] — CRM-SP [número]
+UPA [nome da unidade]`}
+function exTxt(){return X.length?"Solicito:\n"+X.map(x=>"- "+x).join("\n"):""}
+function rxLinhas(){return RXD.length?RXD.map((x,i)=>`${i+1}. ${x}`).join("\n"):""}
+function addEx(t){t=T(t);if(t&&!X.includes(t)){X.push(t);dockRefresh();toast("Exame no prontuário")}}
+function addRx(t){t=T(t);if(t&&!RXD.includes(t)){RXD.push(t);dirty.evo=false;dirty.carta=false;dockRefresh()}}
+
+let dk=null;
+function dockBuild(){
+  const tg=(g,k,t)=>`<button type="button" class="tog" data-a="${g}" data-k="${k}" aria-pressed="false">${esc(t)}</button>`;
+  const tgs=(g,o)=>Object.entries(o).map(([k,t])=>tg(g,k,t)).join("");
+  const inp=(k,id,ph)=>`<input type="text" id="${id}" data-ak="${k}" placeholder="${esc(ph)}" autocomplete="off">`;
+  const ta=(k,id,ph,r=2)=>`<textarea id="${id}" data-ak="${k}" rows="${r}" placeholder="${esc(ph)}"></textarea>`;
+  const box=(id,t,body)=>`<details class="dk-box" id="box-${id}" open><summary>${t}<span class="dk-st" id="st-${id}"></span></summary><div class="dk-c">${body}</div></details>`;
+  const doc=(id,lab)=>`<textarea id="d-${id}" class="dk-ta" aria-label="${lab}"></textarea><div class="dk-b"><button type="button" data-copy="${id}">Copiar</button><button type="button" class="ghost" data-regen="${id}">↻ Regenerar</button><span class="src" id="ed-${id}"></span></div>`;
+  const el=document.createElement("aside");el.id="dock";el.setAttribute("aria-label","Prontuário do atendimento");
+  el.innerHTML=`<div class="dk-h"><div><b>Prontuário</b><span class="src"> bloco de notas do atendimento</span></div><div class="dk-hb"><button type="button" class="ghost" id="dk-all">Copiar tudo</button><button type="button" class="ghost" id="dk-x" aria-label="Fechar prontuário">×</button></div></div>
+  <div class="dk-body">
+  ${box("anam","Anamnese",`
+    <div class="dk-l">QP e QD</div>${inp("qp","a-qp","Queixa principal (ex.: dor no peito)")}
+    <div class="dk-sug" id="qpSug"></div>
+    <div class="dk-r"><label>há ${'<input type="text" inputmode="decimal" id="a-qdn" data-ak="qdN" size="3">'} <select id="a-qdu" data-ak="qdU"><option>horas</option><option selected>dias</option><option>semanas</option><option>meses</option></select></label></div>
+    <div class="dk-l">HMA</div><div class="dk-chips">${tgs("ini",{subito:"Início súbito",gradual:"Início gradual"})}${tgs("cur",{piora:"Piorando",melhora:"Melhorando",estavel:"Estável",oscila:"Vai e volta"})}</div>
+    ${inp("fatores","a-fat","O que piora / melhora")}${inp("automed","a-aut","Já usou algum remédio?")}
+    <div class="dk-auto" id="hmaAuto"></div>${ta("hma","a-hma","Outras queixas, características, evolução…",3)}
+    <div class="dk-l">ISDA</div><div class="dk-auto" id="isdaAuto"></div>${ta("isda","a-isda","Outros sintomas por aparelhos…",2)}
+    <div class="dk-l">AP · antecedentes pessoais</div><div class="dk-chips" id="d-com"></div>
+    <div class="dk-chips">${tg("flag","apNega","Nega comorbidades")}${tgs("hab",HAB)}</div>${ta("ap","a-ap","Outras doenças, internações, observações…",2)}
+    <div class="dk-l">Medicações de uso contínuo</div><div class="dk-chips">${tg("flag","medsNega","Nega uso contínuo")}</div>${inp("meds","a-meds","Quais, dose, horário")}
+    <div class="dk-l">Cirurgias prévias</div><div class="dk-chips">${tg("flag","cirNega","Nega cirurgias")}</div>${inp("cirurg","a-cir","Quais e quando")}
+    <div class="dk-l">Alergias</div><div class="dk-chips" id="d-alg">${tg("algx","nega","Nega alergias")}${tg("algx","ns","Não sabe")}${Object.entries(ALG).map(([k,t])=>tg("alg",k,t)).join("")}</div>${inp("algOutras","a-alo","Outras (alimentos, látex, contraste…)")}
+    <div class="dk-l">AF · antecedentes familiares</div><div class="dk-chips" id="a-af">${tg("flag","afNega","Sem relevância")}${tgs("af",AFS)}</div>${inp("afTxt","a-aft","Quem e outros detalhes")}
+    <div class="dk-l">Exame físico</div>${ta("exame","a-exame","Exame físico (além dos sinais vitais)",3)}<div class="dk-b"><button type="button" class="ghost mini" id="a-modelo">Inserir modelo de exame geral (edite!)</button></div>`)}
+  ${box("evo","Evolução",`<div id="evoStatus"></div>${doc("evo","Evolução")}`)}
+  ${box("ex","Exames solicitados",`<div class="dk-chips" id="exQuick">${EXQ.map(x=>`<button type="button" class="tog" data-exq="${esc(x)}" aria-pressed="false">${esc(x)}</button>`).join("")}</div>
+    <div class="dk-add"><input type="text" id="ex-new" placeholder="Outro exame"><button type="button" class="ghost" id="ex-add">+</button></div><ul class="dk-list" id="exList"></ul>
+    <div class="dk-b"><button type="button" data-copy="ex">Copiar pedido</button></div>`)}
+  ${box("rx","Prescrição",`<div class="dk-add"><input type="text" id="rx-new" placeholder="Adicionar item à prescrição"><button type="button" class="ghost" id="rx-add">+</button></div><ul class="dk-list" id="rxList"></ul>
+    <p class="src">Na ficha da queixa, use “Enviar ao prontuário”.</p><div class="dk-b"><button type="button" data-copy="rx">Copiar prescrição</button></div>`)}
+  ${box("carta","Carta para UBS",doc("carta","Carta para UBS"))}
+  ${box("enc","Encaminhamento / regulação",doc("enc","Encaminhamento"))}
+  <p class="src" style="margin:10px 0 4px">Nada daqui sai do seu navegador e nada é salvo: ao fechar a página, os dados somem. Nome e CPF ficam como [NOME] e 000.000.000-00.</p>
+  </div>`;
+  document.body.appendChild(el);dk=el;
+  const fab=document.createElement("button");fab.type="button";fab.id="dk-fab";fab.className="dk-fab";fab.textContent="Prontuário";document.body.appendChild(fab);
+  const open=v=>{document.body.classList.toggle("dock-open",v);fab.hidden=v;store.set("dock",v?"1":"0")};
+  fab.onclick=()=>open(true);$("#dk-x").onclick=()=>open(false);
+  window.dockOpen=open;open(store.get("dock")==="1"||(store.get("dock")===null&&innerWidth>=1100));
+  el.addEventListener("input",e=>{const t=e.target;if(t.dataset.ak){A[t.dataset.ak]=t.value;dockDocs()}if(t.classList.contains("dk-ta")){const id=t.id.slice(2);if(dirty[id]!==undefined){dirty[id]=true;dkEd()}}});
+  el.addEventListener("change",e=>{const t=e.target;if(t.dataset.ak){A[t.dataset.ak]=t.value;dockDocs()}});
+  el.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const g=b.dataset.a,k=b.dataset.k;
+    if(g){if(g==="ini")A.inicio=A.inicio===k?"":k;else if(g==="cur")A.curso=A.curso===k?"":k;else if(g==="hab"||g==="af"){const s=g==="hab"?A.hab:A.af;s.has(k)?s.delete(k):s.add(k);if(g==="af"&&s.size)A.afNega=false}
+      else if(g==="flag"){A[k]=!A[k];if(k==="apNega"&&A[k]&&P.com.size){A[k]=false}if(k==="afNega"&&A[k])A.af.clear()}
+      else if(g==="com"){P.com.has(k)?P.com.delete(k):P.com.add(k);if(P.com.size)A.apNega=false;mudou();return}
+      else if(g==="alg"){P.alg.has(k)?P.alg.delete(k):P.alg.add(k);if(P.alg.size){P.algNega=false;P.algNS=false}mudou();return}
+      else if(g==="algx"){if(k==="ns"){P.algNS=!P.algNS;if(P.algNS)P.algNega=false}else{P.algNega=!P.algNega;if(P.algNega){P.algNS=false;P.alg.clear()}}mudou();return}
+      dockRefresh();return}
+    if(b.dataset.qp){A.qp=b.dataset.qp;$("#a-qp").value=A.qp;dockRefresh();return}
+    if(b.dataset.exq){X.includes(b.dataset.exq)?X.splice(X.indexOf(b.dataset.exq),1):X.push(b.dataset.exq);dockRefresh();return}
+    if(b.dataset.go){const id=b.dataset.go;if(id==="kill"){location.hash="#atendimento";return}const x=document.getElementById(id);if(x){x.scrollIntoView({block:"center"});if(x.focus)x.focus()}return}
+    if(b.dataset.rmx!==undefined){X.splice(+b.dataset.rmx,1);dockRefresh();return}if(b.dataset.rmr!==undefined){RXD.splice(+b.dataset.rmr,1);dirty.evo=dirty.carta=false;dockRefresh();return}
+    if(b.dataset.regen){dirty[b.dataset.regen]=false;dockRefresh();return}
+    if(b.dataset.copy){const id=b.dataset.copy,txt=id==="ex"?exTxt():id==="rx"?rxLinhas():$("#d-"+id).value;if(!txt){toast("Nada para copiar");return}
+      const m=faltas().e.length;copiar(txt,id==="evo"&&m?`Copiado — ${m} campo(s) fundamentais a preencher`:"Copiado");return}
+    if(b.id==="ex-add"){addEx($("#ex-new").value);$("#ex-new").value="";return}if(b.id==="rx-add"){addRx($("#rx-new").value);$("#rx-new").value="";return}
+    if(b.id==="a-modelo"){const m="Bom estado geral, corado, hidratado, acianótico, anictérico, afebril, eupneico em ar ambiente.";A.exame=T(A.exame)?A.exame+"\n"+m:m;$("#a-exame").value=A.exame;dockRefresh();return}
+    if(b.id==="dk-all"){const t=[$("#d-evo").value,exTxt(),rxLinhas()?"Prescrição:\n"+rxLinhas():""].filter(Boolean).join("\n\n");const m=faltas().e.length;copiar(t,m?`Copiado — ${m} campo(s) fundamentais a preencher`:"Copiado")}});
+  el.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="ex-new"){addEx(e.target.value);e.target.value=""}if(e.key==="Enter"&&e.target.id==="rx-new"){addRx(e.target.value);e.target.value=""}});
+}
+function dkEd(){["evo","carta","enc"].forEach(k=>{const s=$("#ed-"+k);if(s)s.textContent=dirty[k]?"editado à mão":""})}
+function dockFill(){if(!dk)return;dk.querySelectorAll("[data-ak]").forEach(t=>t.value=A[t.dataset.ak]);}
+function dockDocs(){if(!dk)return;
+  if(!dirty.evo)$("#d-evo").value=evolucao();if(!dirty.carta)$("#d-carta").value=carta();if(!dirty.enc)$("#d-enc").value=encam();dkEd();
+  const m=faltas(),chip=(a,c)=>a.map(([id,t])=>`<button type="button" class="chip ${c}" data-go="${id}">${esc(t)}</button>`).join(" ");
+  $("#evoStatus").innerHTML=(m.e.length?`<div class="alarm dk-miss"><b>Fundamental faltando (${m.e.length}):</b> ${chip(m.e,"c-bad")}</div>`:`<div class="dk-ok">Dados fundamentais completos</div>`)+(m.r.length?`<div class="dk-rec"><b>Recomendado:</b> ${chip(m.r,"c-warn")}</div>`:"");
+  const st=(id,n,extra)=>{const s=$("#st-"+id);s.textContent=n?`⚠ ${n}`:extra||"✓";s.className="dk-st "+(n?"bad":"ok")};
+  st("anam",m.e.filter(x=>!x[0].startsWith("p-")&&x[0]!=="kill").length);st("evo",m.e.length);
+  $("#st-ex").textContent=X.length?X.length+" item(ns)":"";$("#st-rx").textContent=RXD.length?RXD.length+" item(ns)":"";$("#st-carta").textContent="";$("#st-enc").textContent=""}
+function dockRefresh(){if(!dk)return;
+  const comKeys=P.modo==="adulto"?Object.keys(COM):["asma","imuno","cardio","prematuro"],cn=Object.assign({},COM,{cardio:"Cardiopatia",prematuro:"Prematuro"});
+  $("#d-com").innerHTML=comKeys.map(k=>`<button type="button" class="tog" data-a="com" data-k="${k}" aria-pressed="false">${esc(cn[k])}</button>`).join("");
+  dk.querySelectorAll("[data-a]").forEach(b=>{const g=b.dataset.a,k=b.dataset.k;let on=false;
+    if(g==="com")on=P.com.has(k);else if(g==="alg")on=P.alg.has(k);else if(g==="algx")on=k==="ns"?P.algNS:P.algNega;else if(g==="ini")on=A.inicio===k;else if(g==="cur")on=A.curso===k;
+    else if(g==="hab")on=A.hab.has(k);else if(g==="af")on=A.af.has(k);else if(g==="flag")on=!!A[k];b.setAttribute("aria-pressed",String(on))});
+  const sug=posF();$("#qpSug").innerHTML=sug.length?`<span class="src">Sintomas marcados:</span> `+sug.map(s=>`<button type="button" class="tog" data-qp="${esc(s)}" aria-pressed="${T(A.qp).toLowerCase()===s}">${esc(s)}</button>`).join(""):'<span class="src">Marque sintomas no Atendimento guiado para usar como QP.</span>';
+  const q=qpTxt().toLowerCase(),out=posF().filter(x=>x!==q),ng=negF();
+  $("#hmaAuto").textContent=out.length?"Outras queixas (dos sintomas marcados): "+out.join(", "):"";$("#isdaAuto").textContent=ng.length?"Nega (dos sintomas marcados): "+ng.join(", "):"";
+  $("#exQuick").querySelectorAll("[data-exq]").forEach(b=>b.setAttribute("aria-pressed",String(X.includes(b.dataset.exq))));
+  $("#exList").innerHTML=X.length?X.map((x,i)=>`<li>${esc(x)}<button type="button" class="ghost mini" data-rmx="${i}" aria-label="Remover">×</button></li>`).join(""):'<li class="src">Nenhum exame.</li>';
+  $("#rxList").innerHTML=RXD.length?RXD.map((x,i)=>`<li>${esc(x)}<button type="button" class="ghost mini" data-rmr="${i}" aria-label="Remover">×</button></li>`).join(""):'<li class="src">Nenhum item.</li>';
+  dockDocs()}
+function dockNovo(){A=A0();X=[];RXD=[];dirty={evo:false,carta:false,enc:false};dockFill()}
+dockBuild();
+
 window.addEventListener("hashchange",rota);
-pacPanel();lista();rota();
+pacPanel();lista();rota();dockRefresh();
 
 </script>
 
@@ -597,6 +758,41 @@ a{color:#D9B8FF}
   font-family:Inter,system-ui,sans-serif;font-size:.85rem;line-height:1.4;padding:8px 16px;text-align:center}
 .ml-warn b{color:#FB923C}
 @media print{.ml-top,.ml-note,.ml-warn{display:none}}
+</style>
+
+<style id="dock-css">
+body.dock-open{transition:padding-right .15s}
+@media (min-width:1100px){body.dock-open{padding-right:420px}}
+#dock{display:none;position:fixed;top:0;right:0;bottom:0;width:420px;max-width:100vw;z-index:40;flex-direction:column;background:#100C2A!important;border-left:1px solid var(--line);box-shadow:-10px 0 34px rgba(0,0,0,.45)}
+body.dock-open #dock{display:flex}
+.dk-h{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.dk-h b{font-family:"Playfair Display",Georgia,serif;font-size:1.1rem}.dk-hb{display:flex;gap:6px}
+.dk-body{flex:1;overflow:auto;padding:10px 12px 40px}
+.dk-box{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:rgba(160,96,216,.06)}
+.dk-box>summary{cursor:pointer;padding:9px 12px;font-weight:700;display:flex;align-items:center;gap:8px;list-style:none}
+.dk-box>summary::-webkit-details-marker{display:none}
+.dk-box>summary::after{content:"▾";margin-left:auto;opacity:.6}.dk-box:not([open])>summary::after{content:"▸"}
+.dk-st{font-family:var(--f-mono);font-size:.72rem;font-weight:600;color:var(--muted)}.dk-st.bad{color:var(--warn)}.dk-st.ok{color:var(--ok)}
+.dk-c{padding:2px 12px 12px;display:flex;flex-direction:column;gap:8px}
+.dk-l{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-top:6px}
+.dk-c input[type=text],.dk-c textarea{width:100%;font:inherit;font-size:.9rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 9px}
+.dk-c textarea{resize:vertical;min-height:44px}.dk-ta{min-height:210px!important;font-family:var(--f-mono)!important;font-size:.8rem!important;line-height:1.45}
+.dk-r{display:flex;gap:8px;align-items:center;font-size:.9rem;color:var(--muted)}.dk-r input{width:4em!important}.dk-r select{flex:0 0 auto}
+.dk-chips,.dk-sug{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.dk-c .tog,.dk-chips .tog{font-size:.78rem;padding:3px 10px;border-radius:99px;background:transparent;color:var(--muted);border:1px solid var(--line);cursor:pointer}
+.dk-c .tog[aria-pressed=true]{background:var(--accent-soft);color:var(--ink);border-color:var(--accent);font-weight:600}
+.dk-auto{font-size:.8rem;color:var(--accent);font-family:var(--f-mono)}.dk-auto:empty{display:none}
+.dk-b{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dk-add{display:flex;gap:6px}.dk-add button{flex:0 0 auto}
+.dk-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.dk-list li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.88rem;border-bottom:1px solid var(--line);padding:3px 0}
+.mini{font-size:.72rem!important;padding:2px 8px!important}
+.dk-miss,.dk-rec,.dk-ok{font-size:.82rem;padding:8px 10px;border-radius:8px;margin-bottom:6px}
+.dk-miss{margin-top:0}.dk-rec{border:1px solid var(--warn);color:var(--ink)}.dk-ok{border:1px solid var(--ok);color:var(--ok)}
+.dk-miss .chip,.dk-rec .chip{cursor:pointer;border:1px solid currentColor;background:transparent;font:inherit;font-size:.76rem}
+.dk-fab{position:fixed;right:14px;bottom:14px;z-index:35;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+@media (max-width:1099px){#dock{width:min(440px,100vw)}}
+@media print{#dock,.dk-fab{display:none!important}}
 </style>
 </body>
 </html>
