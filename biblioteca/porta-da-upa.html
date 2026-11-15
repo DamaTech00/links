@@ -279,7 +279,7 @@ function pacPanel(){
   pp.querySelectorAll("[data-com]").forEach(b=>b.onclick=()=>{const k=b.dataset.com;P.com.has(k)?P.com.delete(k):P.com.add(k);mudou()});
   const bind=(id,key,full)=>{const el=$(id);if(el)el.addEventListener("change",()=>{P[key]=el.value;if(key==="dum"&&el.value&&P.gest==="")P.gest="sim";mudou(full)})};
   [["#p-idade","idade"],["#p-unid","unid"],["#p-peso","peso"],["#p-alt","altura"],["#p-sexo","sexo",1],["#p-gest","gest"],["#p-dum","dum"],["#p-cr","cr"],["#p-pas","pas"],["#p-pad","pad"],["#p-fc","fc"],["#p-fr","fr"],["#p-spo2","spo2"],["#p-temp","temp"],["#p-glic","glic"]].forEach(([i,k,f])=>bind(i,k,f));
-  $("#p-novo").onclick=()=>{P=P0();F={};AF={};dockNovo();mudou(true)};
+  $("#p-novo").onclick=()=>{P=P0();F={};AF={};PN=PN0();dockNovo();mudou(true)};
 }
 function mudou(lst){rx=null;pacPanel();if(typeof dockRefresh==="function")dockRefresh();if(location.hash.slice(1)==="atendimento"||!location.hash){atendV();return}
   if(lst)lista($("#busca").value);if(atual&&!location.hash.startsWith("#m-")){if(!visivel(atual))atual=D.queixas.find(visivel);ficha(atual)}}
@@ -445,6 +445,38 @@ function copiar(t,msg){const fb=$("#fallback")||document.createElement("textarea
 
 /* ---------- atendimento guiado ---------- */
 let F={},AF={},finalDx=null,destino="ubs";
+/* ---- Dor: onde, irradiação, como, quanto (múltipla escolha) ---- */
+const LOC={cabeca:"Cabeça",face:"Face / seios da face",garganta:"Garganta / pescoço",peito:"Peito",dorso:"Costas (dorso)",lombar:"Lombar",epig:"Epigástrio (boca do estômago)",hcd:"Hipocôndrio D",hce:"Hipocôndrio E",fid:"Fossa ilíaca D",fie:"Fossa ilíaca E",hipo:"Hipogástrio / pelve",abd:"Abdome difuso",ombro:"Ombro / braço",perna:"Perna / panturrilha",artic:"Articulação"};
+const IRR={braco:"Braço",mandibula:"Mandíbula",pescoco:"Pescoço",ombro:"Ombro",costas:"Costas",virilha:"Virilha / genitália",perna:"Perna"};
+const TIPO={aperto:"Aperto / pressão / peso",pulsatil:"Pulsátil / latejante",queimacao:"Queimação",pontada:"Pontada / fisgada",colica:"Cólica (vai e volta)",facada:"Facada / lancinante",rasgando:"Rasgando",choque:"Choque / formigamento",continua:"Surda / contínua"};
+const CAB={front:"Frontal",tempD:"Têmpora D",tempE:"Têmpora E",pari:"Parietal",occ:"Occipital",olhoD:"Atrás do olho D",olhoE:"Atrás do olho E",nuca:"Nuca / cervical",difusa:"Toda a cabeça",seios:"Seios da face"};
+const PNLINK={cabeca:["dor-cabeca","Dor de cabeça"],peito:["dor-toracica","Dor no peito"],face:["coriza-face","Dor na face"],garganta:["dor-garganta","Dor de garganta"],epig:["azia","Dor no estômago"],dorso:["dor-costas","Dor nas costas"],lombar:["dor-costas","Dor nas costas"],hcd:["dor-abdominal","Dor abdominal"],hce:["dor-abdominal","Dor abdominal"],fid:["dor-abdominal","Dor abdominal"],fie:["dor-abdominal","Dor abdominal"],hipo:["dor-abdominal","Dor abdominal"],abd:["dor-abdominal","Dor abdominal"]};
+const LOCP={cabeca:"de cabeça",face:"na face",garganta:"na garganta/pescoço",peito:"no peito",dorso:"nas costas",lombar:"lombar",epig:"no epigástrio",hcd:"no hipocôndrio D",hce:"no hipocôndrio E",fid:"na fossa ilíaca D",fie:"na fossa ilíaca E",hipo:"no hipogástrio/pelve",abd:"abdominal difusa",ombro:"no ombro/braço",perna:"na perna/panturrilha",artic:"em articulação"};
+const PN0=()=>({loc:new Set(),irr:new Set(),tipo:new Set(),cab:new Set(),int:null,der:new Set()});
+let PN=PN0();
+function derivaF(){const want=new Set();
+  if(PN.loc.has("peito")){want.add("dor_toracica");if(PN.tipo.has("aperto"))want.add("dor_opressiva")}
+  if(PN.irr.has("braco")||PN.irr.has("mandibula"))want.add("irradia_braco");if(PN.irr.has("costas"))want.add("irradia_dorso");
+  want.forEach(k=>{if(F[k]===undefined){F[k]=1;PN.der.add(k)}});
+  [...PN.der].forEach(k=>{if(!want.has(k)){if(F[k]===1)delete F[k];PN.der.delete(k)}else if(F[k]!==1)PN.der.delete(k)})}
+function dorQP(){return PN.loc.size?"dor "+[...PN.loc].map(k=>LOCP[k]).join(", "):""}
+function dorTxt(){if(!PN.loc.size&&!PN.tipo.size&&PN.int===null)return"";
+  const cab=PN.loc.has("cabeca")&&PN.cab.size?" (área: "+[...PN.cab].map(k=>CAB[k]).join(", ")+")":"";
+  let t=(dorQP()||"Dor")[0].toUpperCase()+(dorQP()||"Dor").slice(1)+cab;
+  if(PN.irr.size)t+=", irradia para "+[...PN.irr].map(k=>IRR[k].toLowerCase()).join(", ");
+  if(PN.tipo.size)t+=", tipo "+[...PN.tipo].map(k=>TIPO[k].toLowerCase()).join(" / ");
+  if(PN.int!==null)t+=", intensidade "+PN.int+"/10";return t}
+function painHTML(){const ch=(g,o)=>`<div class="dk-chips">${Object.entries(o).map(([k,t])=>`<button type="button" class="tog" data-pn="${g}" data-k="${k}" aria-pressed="${PN[g].has(k)}">${esc(t)}</button>`).join("")}</div>`;
+  const nv=PN.int===null?"":PN.int<=3?"leve":PN.int<=6?"moderada":"forte";
+  const links=[...new Map([...PN.loc].filter(k=>PNLINK[k]).map(k=>[PNLINK[k][0],PNLINK[k]])).values()];
+  return `<div class="at-g pain"><div class="grp">Dor — onde, como e quanto <span class="src">(pode marcar mais de uma)</span></div>
+    <div class="pn-l">Onde</div>${ch("loc",LOC)}
+    ${PN.loc.has("cabeca")?`<div class="pn-l">Área da cabeça</div>${ch("cab",CAB)}`:""}
+    <div class="pn-l">Irradia para</div>${ch("irr",IRR)}
+    <div class="pn-l">Como é</div>${ch("tipo",TIPO)}
+    <div class="pn-l" id="pn-int">Intensidade (0–10)${nv?` <span class="src">· ${nv}</span>`:""}</div>
+    <div class="dk-chips pn-int">${Array.from({length:11},(_,i)=>`<button type="button" class="tog${i>=7?" forte":""}" data-pn="int" data-k="${i}" aria-pressed="${PN.int===i}">${i}</button>`).join("")}</div>
+    ${links.length?`<div class="pn-go">${links.map(([id,t])=>`<a class="go" href="#${id}">Conduta: ${esc(t)} →</a>`).join(" ")}</div>`:""}</div>`}
 const vw=$("#atend");
 function val(f){ // 1 presente, 0 ausente, null não avaliado
   if(f.startsWith("h:"))return P.com.has(f.slice(2))?1:null;
@@ -466,7 +498,7 @@ function perguntas(hs,ks){const sc={};const add=(f,w)=>{if(f.includes(":"))retur
 function triChip(f){const v=F[f];return `<span class="tri"><span class="tl">${esc(D.feat[f][0])}</span><button type="button" data-f="${f}" data-v="1" aria-pressed="${v===1}">sim</button><button type="button" data-f="${f}" data-v="0" aria-pressed="${v===0}">não</button></span>`}
 function atendV(){
   if(P.modo==="ped"){vw.innerHTML=`<h1>Atendimento guiado</h1><p class="nota">Este primeiro bloco é para adultos (respiratório e cardiovascular). Para criança, use a aba Queixas com o modo pediátrico.</p>`;return}
-  const s=sv(),hs=pontua(),ks=killers(),qs=perguntas(hs,ks),algum=Object.keys(F).length>0;
+  const s=sv(),hs=pontua(),ks=killers(),qs=perguntas(hs,ks),algum=Object.keys(F).length>0||PN.loc.size>0;
   const grupos={};Object.entries(D.feat).forEach(([f,[l,q,g]])=>{(grupos[g]=grupos[g]||[]).push(f)});
   const pend=ks.filter(x=>!x.feito);if(!finalDx&&hs.length)finalDx=hs[0].id;
   const hipVis=hs.filter((h,i)=>h.s>=2||(i<3&&h.s>0)).slice(0,8);
@@ -474,8 +506,9 @@ function atendV(){
    ${s.instavel?`<div class="alarm" style="margin-bottom:16px"><h2>Instável pelos sinais vitais</h2><p style="margin:0">Sala vermelha agora: monitorização, O₂, acesso, ECG. Use a aba <a href="#m-sala-vermelha">Sala vermelha</a>.</p></div>`:""}
    <div class="at-grid">
     <section class="at-col"><h2 class="at-h">1. Sintomas e achados <span class="src">(marque só o que perguntou/examinou)</span></h2>
+      ${painHTML()}
       ${Object.entries(grupos).map(([g,fs])=>`<div class="at-g"><div class="grp">${esc(g)}</div>${fs.map(triChip).join("")}</div>`).join("")}
-      <button type="button" class="ghost" id="at-limpa" style="margin-top:10px">Limpar sintomas</button></section>
+      <button type="button" class="ghost" id="at-limpa" style="margin-top:10px">Limpar dor e sintomas</button></section>
     <section class="at-col">
       <h2 class="at-h">2. Não pode passar — afaste primeiro</h2>
       ${ks.length?ks.map(x=>`<div class="kill ${x.agora?"k-now":""} ${x.feito?"k-ok":""}"><div class="kh"><b>${esc(x.k.n)}</b>${x.agora?'<span class="chip c-bad">afastar agora</span>':x.feito?'<span class="chip c-ok">afastado</span>':'<span class="chip c-warn">ainda não afastado</span>'}</div>
@@ -499,7 +532,10 @@ function atendV(){
     </section></div>`;
   vw.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{const f=b.dataset.f,v=+b.dataset.v;F[f]=F[f]===v?undefined:v;if(F[f]===undefined)delete F[f];finalDx=null;atendV()});
   vw.querySelectorAll("[data-af]").forEach(s0=>s0.onchange=()=>{AF[s0.dataset.af]=s0.value||undefined;atendV()});
-  $("#at-limpa").onclick=()=>{F={};AF={};finalDx=null;atendV()};
+  vw.querySelectorAll("[data-pn]").forEach(b=>b.onclick=()=>{const g=b.dataset.pn,k=b.dataset.k;
+    if(g==="int"){PN.int=PN.int===+k?null:+k}else{const st=PN[g];st.has(k)?st.delete(k):st.add(k);if(g==="loc"&&k==="cabeca"&&!st.has("cabeca"))PN.cab.clear()}
+    derivaF();finalDx=null;atendV()});
+  $("#at-limpa").onclick=()=>{F={};AF={};PN=PN0();finalDx=null;atendV()};
   $("#at-dx").onchange=e=>{finalDx=e.target.value;atendV()};$("#at-dest").onchange=e=>{destino=e.target.value;atendV()};
   $("#at-pront").onclick=()=>window.dockOpen(true);
   $("#at-abrir").onclick=()=>{location.hash="#"+linkDe(finalDx)};
@@ -576,12 +612,12 @@ const CUR={piora:"com piora progressiva",melhora:"com melhora",estavel:"quadro e
 const UNI={horas:["hora","horas"],dias:["dia","dias"],semanas:["semana","semanas"],meses:["mês","meses"]};
 const EXQ=["ECG","Rx de tórax","Hemograma","PCR","Ureia e creatinina","Eletrólitos","Glicemia capilar","EAS/urina","β-hCG","Troponina","Gasometria","USG"];
 const T=s=>(s||"").trim();
-const posF=()=>Object.entries(F).filter(([f,x])=>x===1).map(([f])=>D.feat[f][0].toLowerCase());
+const posF=()=>Object.entries(F).filter(([f,x])=>x===1&&!PN.der.has(f)).map(([f])=>D.feat[f][0].toLowerCase());
 const negF=()=>Object.entries(F).filter(([f,x])=>x===0).map(([f])=>D.feat[f][0].toLowerCase());
 const qdTxt=()=>{const n=num(A.qdN);return n===null?"":"há "+T(A.qdN)+" "+UNI[A.qdU][n===1?0:1]};
-const qpTxt=()=>T(A.qp)||posF()[0]||"";
+const qpTxt=()=>T(A.qp)||dorQP()||posF()[0]||"";
 const qpQd=()=>[qpTxt(),qdTxt()].filter(Boolean).join(" ");
-function hmaTxt(){const p=[],q=qpTxt().toLowerCase();const ci=[INI[A.inicio],CUR[A.curso]].filter(Boolean).join(", ");if(ci)p.push(ci[0].toUpperCase()+ci.slice(1));
+function hmaTxt(){const p=[],q=qpTxt().toLowerCase();if(dorTxt())p.push(dorTxt());const ci=[INI[A.inicio],CUR[A.curso]].filter(Boolean).join(", ");if(ci)p.push(ci[0].toUpperCase()+ci.slice(1));
   const out=posF().filter(x=>x!==q);if(out.length)p.push("Associado a: "+out.join(", "));
   if(T(A.fatores))p.push("Piora/melhora com: "+T(A.fatores));if(T(A.automed))p.push("Medicação já usada para o quadro: "+T(A.automed));if(T(A.hma))p.push(T(A.hma));return p.join(". ")}
 function isdaTxt(){const t=[],n=negF();if(n.length)t.push("nega "+n.join(", "));if(T(A.isda))t.push(T(A.isda));return t.join(". ")}
@@ -600,7 +636,7 @@ function faltas(){const e=[],r=[],ks=killers();
   if(num(P.pas)===null)e.push(["p-pas","PA"]);if(num(P.fc)===null)e.push(["p-fc","FC"]);if(num(P.spo2)===null)e.push(["p-spo2","SpO₂"]);
   if(P.modo==="adulto"&&gestTalvez()&&P.gest!=="sim"&&P.gest!=="nao"&&P.gest!=="naosei")e.push(["p-gest","gestação (DUM)"]);
   ks.filter(x=>x.agora&&!x.feito).forEach(x=>e.push(["kill","afastar: "+x.k.n]));
-  if(num(P.temp)===null)r.push(["p-temp","temperatura"]);if(num(P.fr)===null)r.push(["p-fr","FR"]);
+  if(PN.loc.size&&PN.int===null)r.push(["pn-int","intensidade da dor"]);if(num(P.temp)===null)r.push(["p-temp","temperatura"]);if(num(P.fr)===null)r.push(["p-fr","FR"]);
   if(!hmaTxt())r.push(["a-hma","HMA (início, evolução)"]);if(!isdaTxt())r.push(["a-isda","ISDA"]);
   if(!apTxt())r.push(["d-com","antecedentes (AP)"]);if(!medsTxt())r.push(["a-meds","medicações de uso contínuo"]);if(!cirTxt())r.push(["a-cir","cirurgias prévias"]);
   if(!afFull())r.push(["a-af","antecedentes familiares"]);if(!T(A.exame))r.push(["a-exame","exame físico"]);
@@ -717,7 +753,7 @@ function dockRefresh(){if(!dk)return;
   dk.querySelectorAll("[data-a]").forEach(b=>{const g=b.dataset.a,k=b.dataset.k;let on=false;
     if(g==="com")on=P.com.has(k);else if(g==="alg")on=P.alg.has(k);else if(g==="algx")on=k==="ns"?P.algNS:P.algNega;else if(g==="ini")on=A.inicio===k;else if(g==="cur")on=A.curso===k;
     else if(g==="hab")on=A.hab.has(k);else if(g==="af")on=A.af.has(k);else if(g==="flag")on=!!A[k];b.setAttribute("aria-pressed",String(on))});
-  const sug=posF();$("#qpSug").innerHTML=sug.length?`<span class="src">Sintomas marcados:</span> `+sug.map(s=>`<button type="button" class="tog" data-qp="${esc(s)}" aria-pressed="${T(A.qp).toLowerCase()===s}">${esc(s)}</button>`).join(""):'<span class="src">Marque sintomas no Atendimento guiado para usar como QP.</span>';
+  const sug=[...(dorQP()?[dorQP()]:[]),...posF()];$("#qpSug").innerHTML=sug.length?`<span class="src">Sintomas marcados:</span> `+sug.map(s=>`<button type="button" class="tog" data-qp="${esc(s)}" aria-pressed="${T(A.qp).toLowerCase()===s}">${esc(s)}</button>`).join(""):'<span class="src">Marque sintomas no Atendimento guiado para usar como QP.</span>';
   const q=qpTxt().toLowerCase(),out=posF().filter(x=>x!==q),ng=negF();
   $("#hmaAuto").textContent=out.length?"Outras queixas (dos sintomas marcados): "+out.join(", "):"";$("#isdaAuto").textContent=ng.length?"Nega (dos sintomas marcados): "+ng.join(", "):"";
   $("#exQuick").querySelectorAll("[data-exq]").forEach(b=>b.setAttribute("aria-pressed",String(X.includes(b.dataset.exq))));
@@ -789,6 +825,11 @@ body.dock-open #dock{display:flex}
 .dk-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
 .dk-list li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.88rem;border-bottom:1px solid var(--line);padding:3px 0}
 .mini{font-size:.72rem!important;padding:2px 8px!important}
+.pain .pn-l{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:10px 0 5px}
+.pain .dk-chips .tog{font-size:.8rem;padding:3px 10px;border-radius:99px;background:transparent;color:var(--muted);border:1px solid var(--line);cursor:pointer}
+.pain .dk-chips .tog[aria-pressed=true]{background:var(--accent-soft);color:var(--ink);border-color:var(--accent);font-weight:600}
+.pn-int .tog{min-width:2.1em;text-align:center}.pn-int .tog.forte[aria-pressed=true]{background:var(--alarm);border-color:var(--alarm);color:#1a0d1f}
+.pn-go{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap}
 .dk-miss,.dk-rec,.dk-ok{font-size:.82rem;padding:8px 10px;border-radius:8px;margin-bottom:6px}
 .dk-miss{margin-top:0}.dk-rec{border:1px solid var(--warn);color:var(--ink)}.dk-ok{border:1px solid var(--ok);color:var(--ok)}
 .dk-miss .chip,.dk-rec .chip{cursor:pointer;border:1px solid currentColor;background:transparent;font:inherit;font-size:.76rem}
