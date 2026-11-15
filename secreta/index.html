@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Área Restrita | Fernanda Souza</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪻</text></svg>" />
+  <meta name="description" content="Estudante de medicina (USCS) e pesquisadora em síntese de evidências e IA na saúde. Lattes, ORCID, LinkedIn, Instagram e o canal Meu Locus." />
+  <meta property="og:title" content="Fernanda Damasceno de Souza" />
+  <meta property="og:description" content="Estudante de medicina (USCS) · síntese de evidências, IA e os detalhes que mudam tudo." />
+  <meta property="og:type" content="profile" />
+  <meta name="theme-color" content="#100C2A" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,400;1,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#100C2A; --bg2:#0B0820; --ink:#EDE6FF; --muted:rgba(237,230,255,.62); --dim:rgba(237,230,255,.42);
+      --lilac:#D9B8FF; --violet:#A860D8; --blue:#3A5BD0; --orange:#FB923C;
+      --card:rgba(160,96,216,.08); --line:rgba(216,184,255,.20);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{-webkit-text-size-adjust:100%;background:var(--bg)}
+    body{
+      font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      color:var(--ink);line-height:1.55;min-height:100vh;display:flex;justify-content:center;
+      padding:40px 20px 56px;-webkit-font-smoothing:antialiased;
+      background:
+        url("../padrao-lilas.png") 0 0/620px auto repeat,
+        radial-gradient(760px 460px at 50% -6%, rgba(168,96,216,.30) 0%, rgba(168,96,216,0) 62%),
+        radial-gradient(600px 420px at 100% 100%, rgba(58,91,208,.16) 0%, rgba(58,91,208,0) 60%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+      background-attachment:fixed;
+    }
+    .wrap{width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+    .avatar{width:104px;height:104px;border-radius:50%;background:url('../avatar.jpg?v=2') center/cover, var(--violet);
+      box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--lilac),0 0 34px rgba(168,96,216,.45);user-select:none}
+    .marca{margin-top:16px;font-family:"Playfair Display",Georgia,serif;font-size:1.05rem;letter-spacing:.3px}
+    .marca i{background:linear-gradient(90deg,var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+    h1{margin-top:6px;font-size:1.9rem;font-weight:800;text-align:center;font-family:"Playfair Display",Georgia,serif;line-height:1.12;letter-spacing:-.01em}
+    .role{margin:10px auto 0;font-size:.95rem;color:var(--muted);text-align:center;max-width:360px}
+    .header-box{width:100%;text-align:center;padding:4px 8px 0}
+    .role-en{margin:4px auto 0;font-size:.8rem;color:var(--dim);font-style:italic;text-align:center;max-width:360px}
+    .story{width:100%;margin-top:20px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+    .story summary{cursor:pointer;font-weight:600;color:var(--lilac);list-style:none;letter-spacing:.2px}
+    .story summary::-webkit-details-marker{display:none}
+    .story p{margin-top:10px;font-size:.9rem;color:var(--muted);line-height:1.65}
+    .story-gallery{display:flex;gap:8px;margin-top:14px}
+    .story-gallery figure{flex:1;margin:0;min-width:0}
+    .story-gallery img,.story-gallery video{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:3px;display:block;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+    .story-cap{margin-top:8px;font-size:.74rem;color:var(--dim);text-align:center;font-style:italic}
+    .divider{width:44px;height:1px;background:linear-gradient(90deg,transparent,var(--lilac),transparent);border:none;margin:24px 0 2px}
+    .section-label{align-self:flex-start;color:var(--lilac);font-size:.7rem;font-weight:600;letter-spacing:.24em;text-transform:uppercase;margin:26px 0 2px;display:flex;align-items:center;gap:10px;width:100%}
+    .section-label::after{content:"";flex:1;height:1px;background:var(--line)}
+    .links{width:100%;list-style:none;display:flex;flex-direction:column;gap:10px;margin-top:12px}
+    .links a,.links-soon{display:flex;align-items:center;gap:14px;
+      background:var(--card);border:1px solid var(--line);border-radius:14px;
+      padding:15px 18px;text-decoration:none;color:var(--ink);transition:transform .12s ease,border-color .12s ease,box-shadow .12s ease,background .12s ease}
+    .links a:hover,.links a:focus-visible{border-color:var(--lilac);background:rgba(160,96,216,.15);transform:translateY(-2px);box-shadow:0 10px 26px rgba(168,96,216,.30);outline:none}
+    .links a:focus-visible{box-shadow:0 0 0 3px rgba(216,184,255,.45)}
+    .links a.destaque{border-left:3px solid var(--orange)}
+    .links-soon{border-style:dashed;opacity:.7;cursor:default}
+    .ic{flex:0 0 26px;width:26px;height:26px;color:var(--lilac);display:flex;align-items:center;justify-content:center}
+    .ic svg{width:24px;height:24px}
+    .txt{display:flex;flex-direction:column;min-width:0}
+    .txt .t{font-weight:600;font-size:1rem}
+    .txt .s{font-size:.8rem;color:var(--muted)}
+    .coupon{margin-top:6px;align-self:flex-start;font-size:.7rem;font-weight:600;letter-spacing:.06em;color:var(--orange);background:rgba(251,146,60,.10);border:1px dashed rgba(251,146,60,.5);border-radius:6px;padding:2px 8px}
+    .arrow{margin-left:auto;color:var(--lilac);flex:0 0 auto;opacity:.6}
+    .emoji-vi{color:transparent;text-shadow:0 0 0 var(--lilac)}
+    .book-ic{width:1.2em;height:1.2em;vertical-align:-0.22em;margin-right:.2em}
+    .tool{width:100%;margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+    .tool-head{display:flex;align-items:center;gap:14px}
+    .tool-head a{color:var(--ink);text-decoration:none}
+    .tool-head a:hover{text-decoration:underline}
+    .dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+    .dl a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border-radius:12px;border:1px solid var(--line);background:rgba(16,12,42,.55);color:var(--ink);text-decoration:none;font-weight:600;font-size:.88rem;text-align:center;transition:border-color .12s ease,background .12s ease}
+    .dl a:hover,.dl a:focus-visible{border-color:var(--lilac);background:rgba(160,96,216,.18);outline:none}
+    .dl small{font-weight:400;font-size:.68rem;color:var(--muted)}
+    .tool-note{margin-top:10px;font-size:.72rem;color:var(--dim);text-align:center}
+    footer{margin-top:34px;font-size:.74rem;color:var(--dim);text-align:center}
+    footer a{color:var(--lilac);text-decoration:none;font-weight:600}
+    @media (max-width:380px){.links a,.links-soon{padding:13px 15px}h1{font-size:1.5rem}}
+    @media (min-width:768px){.wrap{max-width:520px}body{padding-top:64px}.avatar{width:116px;height:116px}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="avatar" style="width:72px;height:72px;margin-bottom:-10px;box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--lilac)" role="img" aria-label="Foto de Fernanda"></div>
+    <div class="header-box" style="margin-top:16px;">
+      <h1>Área Restrita</h1>
+      <p class="role">Materiais e recursos exclusivos.</p>
+    </div>
+
+    <hr class="divider" />
+
+    <p class="section-label">Pesquisa e produção científica</p>
+    <ul class="links">
+<li><a href="#" class="" target="_blank" rel="me noopener noreferrer">
+        <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
+        <span class="txt"><span class="t">Journal Club — roteiro de encontros</span><span class="s">Preparação, estrutura e comunicação. Gratuito.</span></span>
+        <span class="arrow" aria-hidden="true">↗</span></a></li>
+<li><a href="#" class="" target="_blank" rel="me noopener noreferrer">
+        <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+        <span class="txt"><span class="t">Journal Club — trilha de 12 semanas</span><span class="s">Habilidade de leitura crítica (1/sem). Gratuito.</span></span>
+        <span class="arrow" aria-hidden="true">↗</span></a></li>
+    </ul>
+
+    <p class="section-label">Ferramentas de produção de conteúdo</p>
+    <ul class="links">
+<li><a href="#" class="" target="_blank" rel="me noopener noreferrer">
+        <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
+        <span class="txt"><span class="t">Guia de gravação</span><span class="s">Como organizo minha mesa (três câmeras, iluminação, comandos de IA)</span></span>
+        <span class="arrow" aria-hidden="true">↗</span></a></li>
+    </ul>
+
+    <p class="section-label">Saúde pública e educação de pacientes</p>
+    <ul class="links">
+<li><a href="#" class="" target="_blank" rel="me noopener noreferrer">
+        <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        <span class="txt"><span class="t">Edição SUS</span><span class="s">10 temas orientativos sobre UBS, Farmácia Popular e medicamentos. Gratuito.</span></span>
+        <span class="arrow" aria-hidden="true">↗</span></a></li>
+    </ul>
+
+    <div style="text-align:center; margin-top:30px;">
+       <a href="../" style="color:var(--lilac); text-decoration:none; font-size:0.85rem; font-weight:600;">← Voltar para a página principal</a>
+    </div>
+
+<footer>© <span id="y"></span> Fernanda Damasceno de Souza · código por <a href="https://github.com/DamaTech00" target="_blank" rel="noopener noreferrer">Dama Tech</a></footer>
+  </main>
+  <script>document.getElementById('y').textContent=new Date().getFullYear();</script>
+</body>
+</html>
