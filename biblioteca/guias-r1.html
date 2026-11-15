@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guias do R1 - Meu Locus</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; font-family: "Inter", sans-serif; background: #0B0820; color: #EDE6FF; overflow: hidden; }
+    .ml-top { padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; background: #100C2A; border-bottom: 1px solid rgba(216,184,255,.1); }
+    .ml-back { color: #D9B8FF; text-decoration: none; font-size: 0.85rem; font-weight: 600; }
+    .ml-brand { font-size: 0.9rem; font-weight: 600; color: #EDE6FF; font-style: italic; }
+    .tabs-wrapper { background: #100C2A; border-bottom: 1px solid rgba(216,184,255,.1); position: relative; }
+    .tabs { display: flex; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { flex: 0 0 auto; text-align: center; padding: 12px 20px; color: rgba(237,230,255,.6); cursor: pointer; white-space: nowrap; font-size: 0.9rem; border-bottom: 2px solid transparent; font-weight: 500; transition: all 0.2s; }
+    .tab:hover:not(.locked) { color: #EDE6FF; background: rgba(216,184,255,.05); }
+    .tab.active { color: #D9B8FF; border-bottom: 2px solid #D9B8FF; font-weight: 600; background: rgba(216,184,255,.08); }
+    .tab.locked { cursor: not-allowed; opacity: 0.5; }
+    .content-frame { width: 100%; height: calc(100% - 92px); border: none; display: block; }
+  </style>
+</head>
+<body>
+  <div class="ml-top">
+    <a class="ml-back" href="./">← biblioteca</a>
+    <span class="ml-brand"><i>meu</i> locus</span>
+  </div>
+  <div class="tabs-wrapper">
+    <div class="tabs">
+      <div class="tab active">Patologia</div>
+      <div class="tab locked">Genética Médica 🔒</div>
+      <div class="tab locked">Clínica Médica 🔒</div>
+      <div class="tab locked">Radioterapia 🔒</div>
+      <div class="tab locked">Radiologia 🔒</div>
+      <div class="tab locked">Patologia Clínica 🔒</div>
+      <div class="tab locked">Reabilitação 🔒</div>
+    </div>
+  </div>
+  <iframe class="content-frame" id="frame-0" src="pato/index.html"></iframe>
+</body>
+</html>
