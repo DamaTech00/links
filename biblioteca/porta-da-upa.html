@@ -425,7 +425,7 @@ function ficha(q){
   document.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>{const [i,j]=b.dataset.swap.split(":").map(Number);const cur=rx[i];const x=cur.alts[j];
     const orig=cur.orig?cur.origItem:cur;rx[i]=Object.assign({},x,{alts:orig.alts,orig:orig.med,origItem:orig});abertos.delete(i);ficha(atual)});
   document.querySelectorAll("[data-undo]").forEach(a=>a.onclick=e=>{e.preventDefault();const i=+a.dataset.undo;rx[i]=rx[i].origItem;ficha(atual)});
-  const bc=$("#fichaCarta"),be=$("#fichaEvol");const abre=id=>{finalDx=q.id;destino="ubs";dirty.carta=dirty.evo=false;window.dockOpen(true);dockRefresh();const b=$("#box-"+id);if(b){b.open=true;b.scrollIntoView({block:"start"})}};
+  const bc=$("#fichaCarta"),be=$("#fichaEvol");const abre=id=>{finalDx=q.id;destino="ubs";addHDByQueixa(q.id);dirty.carta=dirty.evo=false;window.dockOpen(true);dockRefresh();const b=$("#box-"+id);if(b){b.open=true;b.scrollIntoView({block:"start"})}};
   if(bc)bc.onclick=()=>abre("carta");if(be)be.onclick=()=>abre("evo");
   const rb=$("#rxToDock");if(rb)rb.onclick=()=>{const its=[...document.querySelectorAll(".item input:checked")].map(c=>rx[+c.dataset.i]);if(!its.length){toast("Marque ao menos um item");return}its.forEach(a=>addRx(a.med+" — "+a.pos));toast("Prescrição no prontuário")};
   const pb=$("#pedToDock");if(pb)pb.onclick=()=>{textoPed().split("\n").filter(l=>/^\d+\. /.test(l)).forEach(l=>addRx(l.replace(/^\d+\. /,"")));toast("Prescrição no prontuário")};
@@ -500,7 +500,7 @@ function atendV(){
   if(P.modo==="ped"){vw.innerHTML=`<h1>Atendimento guiado</h1><p class="nota">Este primeiro bloco é para adultos (respiratório e cardiovascular). Para criança, use a aba Queixas com o modo pediátrico.</p>`;return}
   const s=sv(),hs=pontua(),ks=killers(),qs=perguntas(hs,ks),algum=Object.keys(F).length>0||PN.loc.size>0;
   const grupos={};Object.entries(D.feat).forEach(([f,[l,q,g]])=>{(grupos[g]=grupos[g]||[]).push(f)});
-  const pend=ks.filter(x=>!x.feito);if(!finalDx&&hs.length)finalDx=hs[0].id;
+  const pend=ks.filter(x=>!x.feito);
   const hipVis=hs.filter((h,i)=>h.s>=2||(i<3&&h.s>0)).slice(0,8);
   vw.innerHTML=`
    ${s.instavel?`<div class="alarm" style="margin-bottom:16px"><h2>Instável pelos sinais vitais</h2><p style="margin:0">Sala vermelha agora: monitorização, O₂, acesso, ECG. Use a aba <a href="#m-sala-vermelha">Sala vermelha</a>.</p></div>`:""}
@@ -524,8 +524,8 @@ function atendV(){
         ${h.link?`<a class="go" href="#${h.link==="sala"?"m-sala-vermelha":h.link}">${h.link==="sala"?"Sala vermelha":"Abrir conduta →"}</a>`:'<span class="src">Pedir BAAR/RX e notificar se confirmar</span>'}</div>`).join(""):'<p class="empty">—</p>'}
       <p class="src">A barra mostra compatibilidade pelas regras, não probabilidade. Escores validados (Wells, PERC, HEART, CRB-65) valem mais que ela.</p>
       <h2 class="at-h">5. Desfecho e documentos</h2>
-      <div class="card"><label>Diagnóstico final <select id="at-dx">${D.queixas.filter(q=>q.tipo==="diagnostico"&&!q.soPed).map(q=>`<option value="${q.id}"${linkDe(finalDx)===q.id?" selected":""}>${esc(q.titulo)}</option>`).join("")}</select></label>
-        <label style="margin-left:12px">Destino <select id="at-dest"><option value="ubs"${destino==="ubs"?" selected":""}>Alta com seguimento na UBS</option><option value="obs"${destino==="obs"?" selected":""}>Observação na UPA</option><option value="transf"${destino==="transf"?" selected":""}>Transferência/regulação</option></select></label>
+      <div class="card"><div style="margin-bottom:8px">HD (do prontuário): <b id="at-hd">${esc(hdTxt()||"— escolha no painel Prontuário")}</b></div>
+        <label>Destino <select id="at-dest"><option value="ubs"${destino==="ubs"?" selected":""}>Alta com seguimento na UBS</option><option value="obs"${destino==="obs"?" selected":""}>Observação na UPA</option><option value="transf"${destino==="transf"?" selected":""}>Transferência/regulação</option></select></label>
         ${destino==="ubs"&&pend.length?`<div class="alarm" style="margin-top:10px"><b>Antes da alta, registre como afastou:</b> ${pend.map(x=>esc(x.k.n)).join(", ")}</div>`:""}
         <div class="flow-b" style="margin-top:10px"><button type="button" id="at-abrir">Abrir conduta e receita</button><button type="button" class="ghost" id="at-pront">Abrir prontuário →</button></div>
         <p class="src" style="margin-top:8px">Anamnese, evolução, exames, prescrição, carta para UBS e encaminhamento ficam no painel <b>Prontuário</b>, ao lado.</p></div>
@@ -536,9 +536,9 @@ function atendV(){
     if(g==="int"){PN.int=PN.int===+k?null:+k}else{const st=PN[g];st.has(k)?st.delete(k):st.add(k);if(g==="loc"&&k==="cabeca"&&!st.has("cabeca"))PN.cab.clear()}
     derivaF();finalDx=null;atendV()});
   $("#at-limpa").onclick=()=>{F={};AF={};PN=PN0();finalDx=null;atendV()};
-  $("#at-dx").onchange=e=>{finalDx=e.target.value;atendV()};$("#at-dest").onchange=e=>{destino=e.target.value;atendV()};
+  $("#at-dest").onchange=e=>{destino=e.target.value;atendV()};
   $("#at-pront").onclick=()=>window.dockOpen(true);
-  $("#at-abrir").onclick=()=>{location.hash="#"+linkDe(finalDx)};
+  $("#at-abrir").onclick=()=>{const q=hdQ();if(q)location.hash="#"+q.id;else{window.dockOpen(true);toast("Escolha uma HD (CID) para abrir a conduta")}};
   prefill();calcUpd();vw.querySelectorAll("[data-c]").forEach(e=>e.addEventListener("input",calcUpd));dirty.evo=dirty.evo&&false;dockRefresh();
 }
 function linkDe(id){if(!id)return"";const h=D.hip[id];if(h&&h[1]&&h[1]!=="sala")return h[1];return D.queixas.some(q=>q.id===id)?id:"sindrome-gripal"}
@@ -551,7 +551,7 @@ function achadosTxt(v){return Object.entries(F).filter(([f,x])=>x===v).map(([f])
 function algTxt(){return P.alg.size?"Alergia a "+[...P.alg].map(k=>ALG[k]).join(", "):P.algNega?"Nega alergias":P.algNS?"Desconhece alergias":"Alergias não informadas"}
 function grupoRisco(){const a=idadeAnos(),w=num(P.peso),h=num(P.altura);return gestSim()||(a!==null&&(a>=60||a<5))||["dpoc","asma","ic","dac","dm","drc","imuno","hepato","cancer"].some(k=>P.com.has(k))||(w&&h&&w/Math.pow(h/100,2)>=40)}
 function rxPadrao(q){if(!q||!q.alta)return[];return q.alta.filter(a=>!bloqueio(a.k).some(b=>b.c==="c-bad")&&status(a.k).c!=="c-warn"&&!(/só grupo de risco/.test(a.pos)&&!grupoRisco())).map(a=>`${a.med} — ${a.pos}`)}
-function carta(){const q=dxQ();const hoje=new Date().toLocaleDateString("pt-BR");const ks=killers();
+function carta(){const q=hdQ();const hoje=new Date().toLocaleDateString("pt-BR");const ks=killers();
   const dest={ubs:"Alta da UPA com seguimento na UBS",obs:"Mantido(a) em observação na UPA",transf:"Encaminhado(a) para serviço de referência via regulação"}[destino];
   return `ENCAMINHAMENTO / CONTRARREFERÊNCIA PARA A UBS
 Data: ${hoje}
@@ -569,12 +569,12 @@ Negava: ${achadosTxt(0)||"—"}.
 Sinais vitais: ${svTxt()}.
 Condições graves avaliadas e afastadas: ${ks.filter(x=>x.feito).map(x=>x.k.n+" ("+x.feito+")").join("; ")||"—"}.
 
-Hipótese diagnóstica: ${q?q.titulo:"—"}.
-Conduta na UPA: ${q&&q.agora?q.agora.slice(0,3).join("; "):"—"}.
+Hipótese diagnóstica: ${hdTxt()||"—"}.
+Conduta na UPA: ${condTxt()||"—"}.
 Prescrição de alta: ${rxTxt(q)||"conforme receita anexa"}.
 Desfecho: ${dest}.
 
-Solicito: ${D.ubs[linkDe(finalDx)]||"avaliação e seguimento em consulta."}
+Solicito: ${(q&&D.ubs[q.id])||"avaliação e seguimento em consulta."}
 
 Paciente orientado(a) sobre sinais de alarme e retorno imediato à UPA se: ${q&&q.orient?q.orient:"piora dos sintomas"}
 
@@ -603,8 +603,19 @@ function rota(){const h=location.hash.slice(1)||"atendimento";
 $("#busca").addEventListener("input",e=>{const f=lista(e.target.value);if(f&&e.target.value)ficha(f)});
 sel.addEventListener("change",()=>{store.set("mun",sel.value);if(atual)ficha(atual)});
 /* ---------- PRONTUÁRIO: bloco de notas lateral (anamnese, evolução, exames, prescrição, carta, encaminhamento) ---------- */
-const A0=()=>({qp:"",qdN:"",qdU:"dias",inicio:"",curso:"",fatores:"",automed:"",hma:"",isda:"",apNega:false,ap:"",meds:"",medsNega:false,cirurg:"",cirNega:false,hab:new Set(),algOutras:"",afNega:false,af:new Set(),afTxt:"",exame:""});
-let A=A0(),X=[],RXD=[],dirty={evo:false,carta:false,enc:false};
+const A0=()=>({qp:"",qdN:"",qdU:"dias",inicio:"",curso:"",fatores:"",automed:"",hma:"",isda:"",apNega:false,ap:"",meds:"",medsNega:false,cirurg:"",cirNega:false,hab:new Set(),algOutras:"",afNega:false,af:new Set(),afTxt:"",ef:{geral:"",cab:"",acv:"",ar:"",abd:"",ext:"",neuro:"",pele:"",outros:""},cond:""});
+let A=A0(),X=[],RXD=[],HD=[],dirty={evo:false,carta:false,enc:false};
+const EFS={geral:"Geral",cab:"Cabeça e pescoço / ORL",acv:"Cardiovascular",ar:"Respiratório",abd:"Abdome",ext:"Extremidades / músculo-esquelético",neuro:"Neurológico",pele:"Pele",outros:"Outros (geniturinário, ginecológico, psiquiátrico…)"};
+const EFN={geral:"Bom estado geral, lúcido e orientado, corado, hidratado, acianótico, anictérico, afebril, eupneico em ar ambiente, perfusão periférica preservada (TEC < 3 s).",
+ cab:"Normocefálico, pupilas isocóricas e fotorreagentes, mucosas úmidas, orofaringe sem hiperemia ou exsudato, otoscopia sem alterações, sem linfonodomegalia cervical, sem estase jugular, sem rigidez de nuca.",
+ acv:"Ritmo cardíaco regular em 2 tempos, bulhas normofonéticas, sem sopros; pulsos periféricos simétricos e palpáveis; sem edema de membros inferiores.",
+ ar:"Tórax simétrico, expansibilidade preservada, sem uso de musculatura acessória; murmúrio vesicular universal, sem ruídos adventícios.",
+ abd:"Plano, flácido, indolor à palpação superficial e profunda, sem massas ou visceromegalias, ruídos hidroaéreos presentes, Blumberg negativo, Giordano negativo bilateral.",
+ ext:"Sem edema, panturrilhas livres, sem sinais de TVP; articulações sem sinais flogísticos, amplitude de movimento preservada.",
+ neuro:"Glasgow 15, força grau 5 nos quatro membros, sensibilidade preservada, reflexos simétricos, marcha sem alterações, sem dismetria, Romberg negativo, sem déficit focal.",
+ pele:"Sem lesões, petéquias ou exantema, sem palidez, turgor preservado."};
+const efAny=()=>Object.values(A.ef).some(v=>T(v));
+function efTxt(){return Object.entries(EFS).filter(([k])=>T(A.ef[k])).map(([k,t])=>`${t.split(" (")[0]}: ${T(A.ef[k])}`).join("\n  ")}
 const HAB={tab:"Tabagismo",etil:"Etilismo",drog:"Drogas ilícitas",sed:"Sedentarismo"};
 const AFS={has:"HAS",dm:"DM",iam:"IAM/DAC precoce",avc:"AVC",ca:"Câncer",tev:"TVP/TEP",resp:"Asma/DPOC",rim:"Doença renal"};
 const INI={subito:"início súbito",gradual:"início gradual"};
@@ -628,8 +639,8 @@ const cirTxt=()=>A.cirNega?"nega":T(A.cirurg);
 function algFull(){const b=(P.alg.size||P.algNega||P.algNS)?algTxt():"";return [b,T(A.algOutras)?"outras: "+T(A.algOutras):""].filter(Boolean).join("; ")}
 function afFull(){return A.afNega?"sem antecedentes relevantes":[...[...A.af].map(k=>AFS[k]),T(A.afTxt)].filter(Boolean).join(", ")}
 const svOk=()=>!!(P.pas||P.fc||P.fr||P.spo2||P.temp||P.glic);
-function dxQ(){const h=location.hash.slice(1);if(atual&&atual.tipo==="diagnostico"&&h&&h!=="atendimento"&&!h.startsWith("m-"))return atual;return D.queixas.find(x=>x.id===linkDe(finalDx))}
 function faltas(){const e=[],r=[],ks=killers();
+  if(!HD.some(h=>h.st!=="afast"))e.push(["hd-q","hipótese diagnóstica (CID)"]);
   if(!qpTxt())e.push(["a-qp","queixa principal"]);if(num(A.qdN)===null)e.push(["a-qdn","duração (QD)"]);
   if(idadeAnos()===null)e.push(["p-idade","idade"]);if(!P.sexo)e.push(["p-sexo","sexo"]);
   if(!(P.alg.size||P.algNega||P.algNS)&&!T(A.algOutras))e.push(["d-alg","alergias"]);
@@ -639,20 +650,46 @@ function faltas(){const e=[],r=[],ks=killers();
   if(PN.loc.size&&PN.int===null)r.push(["pn-int","intensidade da dor"]);if(num(P.temp)===null)r.push(["p-temp","temperatura"]);if(num(P.fr)===null)r.push(["p-fr","FR"]);
   if(!hmaTxt())r.push(["a-hma","HMA (início, evolução)"]);if(!isdaTxt())r.push(["a-isda","ISDA"]);
   if(!apTxt())r.push(["d-com","antecedentes (AP)"]);if(!medsTxt())r.push(["a-meds","medicações de uso contínuo"]);if(!cirTxt())r.push(["a-cir","cirurgias prévias"]);
-  if(!afFull())r.push(["a-af","antecedentes familiares"]);if(!T(A.exame))r.push(["a-exame","exame físico"]);
+  if(!afFull())r.push(["a-af","antecedentes familiares"]);if(!efAny())r.push(["ef-geral","exame físico"]);
   return{e,r}}
 const rxTxt=q=>RXD.join("; ");
-function evolucao(){const q=dxQ(),ks=killers(),PH=t=>`[PREENCHER: ${t}]`,L=[];
+/* ---- Hipóteses diagnósticas (CID) ---- */
+const REC=[["J06.9","IVAS / resfriado (infecção aguda de vias aéreas superiores)","sindrome-gripal"],["J11.1","Síndrome gripal / influenza (gripe)","sindrome-gripal"],["J10.1","Influenza, vírus identificado","sindrome-gripal"],["U07.1","COVID-19","sindrome-gripal"],["J00","Nasofaringite aguda (resfriado comum)","sindrome-gripal"],["J02.9","Faringite aguda","faringoamigdalite"],["J03.9","Amigdalite aguda","faringoamigdalite"],["J01.9","Sinusite aguda","rinossinusite"],["J20.9","Bronquite aguda"],["J18.9","Pneumonia","pac"],["J45.9","Asma","asma"],["J46","Estado de mal asmático","asma"],["J44.1","DPOC exacerbada","dpoc"],["A90","Dengue","dengue"],["A91","Dengue hemorrágica","dengue"],["R05","Tosse"],["R06.0","Dispneia"],["R50.9","Febre"],["R07.4","Dor torácica"],["R07.3","Outra dor torácica"],["I10","Hipertensão essencial"],["I16.9","Crise hipertensiva"],["I20.0","Angina instável"],["I21.9","Infarto agudo do miocárdio"],["I50.9","Insuficiência cardíaca","ic"],["I48.9","Fibrilação / flutter atrial","taquiarritmia"],["I47.1","Taquicardia supraventricular","taquiarritmia"],["I26.9","Tromboembolismo pulmonar","tep"],["R00.2","Palpitações"],["R55","Síncope"],["R42","Tontura"],["H81.1","VPPB (vertigem posicional paroxística benigna)","vertigem"],["H81.2","Neurite vestibular","vertigem"],["R51","Cefaleia","cefaleia"],["G43.9","Enxaqueca","cefaleia"],["G44.2","Cefaleia tensional","cefaleia"],["G44.0","Cefaleia em salvas","cefaleia"],["I64","Acidente vascular cerebral"],["G45.9","Ataque isquêmico transitório"],["R56.8","Crise convulsiva"],["A09","Gastroenterite infecciosa / diarreia","gastroenterite"],["K52.9","Gastroenterite não infecciosa","gastroenterite"],["R11","Náusea e vômitos"],["K29.7","Gastrite","dispepsia"],["K21.9","Doença do refluxo gastroesofágico","dispepsia"],["K30","Dispepsia","dispepsia"],["R10.4","Dor abdominal"],["K35.8","Apendicite aguda"],["K80.2","Colelitíase"],["K85.9","Pancreatite aguda"],["K59.0","Constipação"],["N23","Cólica renal","colica-renal"],["N20.0","Cálculo renal"],["N39.0","Infecção urinária","itu"],["N30.0","Cistite aguda","itu"],["N10","Pielonefrite aguda","itu"],["N76.0","Vaginite aguda"],["N93.9","Sangramento uterino anormal"],["M54.5","Lombalgia","lombalgia"],["M54.4","Lombociatalgia","lombalgia"],["M54.2","Cervicalgia"],["M79.1","Mialgia"],["M25.5","Dor articular"],["S93.4","Entorse de tornozelo","entorse-tornozelo"],["L50.9","Urticária","urticaria-anafilaxia"],["T78.2","Anafilaxia","urticaria-anafilaxia"],["T78.4","Alergia não especificada","urticaria-anafilaxia"],["L03.1","Celulite de membros","celulite-erisipela"],["L03.9","Celulite","celulite-erisipela"],["A46","Erisipela","celulite-erisipela"],["T14.1","Ferimento / mordedura","ferimento-mordedura"],["F41.0","Transtorno de pânico","ansiedade"],["F41.9","Ansiedade","ansiedade"],["E11.9","Diabetes mellitus tipo 2"],["E16.2","Hipoglicemia"],["B34.9","Infecção viral não especificada"],["B02.9","Herpes zóster"],["H10.9","Conjuntivite"],["H66.9","Otite média"],["H60.9","Otite externa"]];
+let CIDALL=null,CIDLOAD=false;
+const nrm=t=>" "+String(t).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9.]+/g," ");
+const SYN={cabeca:"cefaleia enxaqueca salvas tensional",peito:"toracica angina infarto isquemica coronariana",toracica:"angina infarto toracica",barriga:"abdominal gastroenterite apendicite colica",abdome:"abdominal gastroenterite apendicite colica",abdominal:"abdominal gastroenterite colica apendicite",estomago:"gastrite dispepsia refluxo",epigastrio:"gastrite dispepsia refluxo",costas:"lombalgia lombar dorsalgia",lombar:"lombalgia lombar ciatica",garganta:"faringite amigdalite",urina:"urinaria cistite pielonefrite",ardencia:"urinaria cistite",tosse:"bronquite pneumonia tosse",febre:"febre gripe dengue viral",dispneia:"dispneia asma dpoc embolia insuficiencia",ar:"dispneia asma dpoc",tontura:"vertigem tontura",coceira:"urticaria alergia",pele:"urticaria celulite erisipela"};
+const REC_K=REC.map(r=>({c:r[0],n:r[1],q:r[2],rec:true,k:nrm(r[0]+" "+r[0].replace(".","")+" "+r[1])}));
+function cidLoad(){if(CIDLOAD)return;CIDLOAD=true;fetch("cid10.json").then(r=>r.json()).then(j=>{CIDALL=j.d.map(x=>{const i=x.indexOf("|"),c=x.slice(0,i),n=x.slice(i+1);return{c,n,k:nrm(c+" "+c.replace(".","")+" "+n)}});hdSug()}).catch(()=>{CIDLOAD=false})}
+function cidBusca(q){const t=nrm(q).split(" ").filter(Boolean);
+  if(!t.length){const ctx=nrm([qpTxt(),dorTxt()].join(" ")).split(" ").filter(w=>w.length>3).flatMap(w=>[w].concat((SYN[w]||"").split(" ").filter(Boolean)));
+    const sc=r=>ctx.reduce((a,w)=>a+(r.k.includes(" "+w.slice(0,Math.max(4,w.length-2)))?1:0),0);return REC_K.map((r,i)=>[sc(r),i,r]).sort((a,b)=>b[0]-a[0]||a[1]-b[1]).map(x=>x[2])}
+  const m=x=>t.every(w=>x.k.includes(" "+w));const res=REC_K.filter(m),seen=new Set(res.map(r=>r.c));
+  if(CIDALL)for(const x of CIDALL){if(res.length>=60)break;if(!seen.has(x.c)&&m(x)){res.push(x);seen.add(x.c)}}
+  return res}
+const hdQId=h=>{if(!h)return"";if(h.q)return h.q;const r=REC.find(r=>r[0]===h.code);return r&&r[2]||""};
+const hdPrincipal=()=>HD.find(h=>h.st!=="afast");
+const hdQ=()=>{const h=hdPrincipal();const id=hdQId(h);return id?D.queixas.find(x=>x.id===id):undefined};
+const hdNome=h=>(h.code?h.code+" ":"")+h.txt;
+function hdTxt(){const pr=hdPrincipal();return pr?hdNome(pr):""}
+function addHD(code,txt,q){if(HD.some(h=>h.code===code&&h.txt===txt))return;HD.push({code,txt,q:q||"",st:"inv",nota:""});dirty.evo=dirty.carta=dirty.enc=false;dockRefresh()}
+function addHDByQueixa(id){if(HD.length)return;const r=REC.find(r=>r[2]===id);if(r)addHD(r[0],r[1],r[2])}
+const ST={inv:"em investigação",conf:"confirmada",afast:"afastada"};
+function hdLinhas(){const pr=hdPrincipal(),fmt=h=>hdNome(h)+(T(h.nota)?" ("+T(h.nota)+")":"");
+  const L=[];if(pr)L.push("HD: "+fmt(pr)+(pr.st==="conf"?" — confirmada":" — em investigação")+".");
+  const dd=HD.filter(h=>h!==pr&&h.st!=="afast");if(dd.length)L.push("Outras hipóteses/DD em investigação: "+dd.map(fmt).join("; ")+".");
+  const af=HD.filter(h=>h.st==="afast");if(af.length)L.push("DD afastados: "+af.map(fmt).join("; ")+".");return L}
+function condTxt(){return [T(A.cond),X.length?"exames: "+X.join(", "):"",RXD.length?"prescrição: "+RXD.join(", "):""].filter(Boolean).join(". ")}
+function evolucao(){const ks=killers(),PH=t=>`[PREENCHER: ${t}]`,L=[];
   L.push(`Paciente ${resumoPac()}.`);L.push(`QP: ${qpTxt()||PH("queixa principal")}`);L.push(`QD: ${qdTxt()||PH("há quanto tempo")}`);
   const h=hmaTxt();if(h)L.push("HMA: "+h+".");const i=isdaTxt();if(i)L.push("ISDA: "+i+".");
   const ap=apTxt();if(ap)L.push("AP: "+ap+".");if(medsTxt())L.push("Medicações de uso contínuo: "+medsTxt()+".");if(cirTxt())L.push("Cirurgias/internações prévias: "+cirTxt()+".");
   L.push((algFull()||PH("alergias"))+".");const af=afFull();if(af)L.push("AF: "+af+".");
-  L.push("Exame físico/SSVV: "+(svOk()?svTxt():PH("sinais vitais"))+(T(A.exame)?". "+T(A.exame):"")+".");
-  L.push(`A: ${q?q.titulo:"—"}. Diagnósticos de risco considerados: ${ks.map(x=>x.k.n+(x.feito?" — afastado: "+x.feito:" — não afastado")).join("; ")||"—"}.`);
-  if(X.length)L.push("Exames solicitados: "+X.join("; ")+".");
-  L.push(`P: ${q&&q.agora?q.agora.join("; "):"—"}. Prescrição: ${rxTxt(q)||"—"}. ${destino==="ubs"?"Alta com encaminhamento para UBS.":destino==="obs"?"Mantido em observação com reavaliação seriada.":"Solicitada regulação/transferência."}`);
-  L.push(`Orientado(a) sobre sinais de alarme (${q&&q.orient?q.orient:"piora"}) e retorno imediato se presentes; compreendeu e concorda.`);return L.join("\n")}
-function encam(){const q=dxQ(),hoje=new Date().toLocaleDateString("pt-BR"),PH=t=>`[PREENCHER: ${t}]`;
+  L.push("Exame físico:\n  SSVV: "+(svOk()?svTxt():PH("sinais vitais"))+(efAny()?"\n  "+efTxt():""));
+  const hl=hdLinhas();L.push(hl.length?"A: "+hl.join(" "):"A: "+PH("hipótese diagnóstica (CID)"));
+  const feitos=ks.filter(x=>x.feito);if(feitos.length)L.push("Diagnósticos graves afastados: "+feitos.map(x=>x.k.n+" ("+x.feito+")").join("; ")+".");
+  L.push("P: "+(condTxt()||PH("conduta"))+". "+(destino==="ubs"?"Alta com encaminhamento para UBS.":destino==="obs"?"Mantido em observação com reavaliação seriada.":"Solicitada regulação/transferência."));
+  const q=hdQ();L.push(`Orientado(a) sobre sinais de alarme (${q&&q.orient?q.orient:"piora do quadro"}) e retorno imediato se presentes; compreendeu e concorda.`);return L.join("\n")}
+function encam(){const hoje=new Date().toLocaleDateString("pt-BR"),PH=t=>`[PREENCHER: ${t}]`;
   return `SOLICITAÇÃO DE REGULAÇÃO / TRANSFERÊNCIA
 Data: ${hoje}
 
@@ -661,11 +698,11 @@ CPF: 000.000.000-00   Cartão SUS: [CNS]
 Dados: ${resumoPac()}
 ${algFull()||"Alergias não informadas"}. AP: ${apTxt()||"não informados"}.
 
-Hipótese diagnóstica: ${q?q.titulo:PH("hipótese")}.
+Hipótese diagnóstica: ${hdTxt()||PH("hipótese")}.
 Motivo da transferência: ${PH("ex.: necessidade de leito de UTI / avaliação da especialidade / exame não disponível na UPA")}
 Resumo do caso: ${qpQd()||PH("queixa e duração")}. ${hmaTxt()?hmaTxt()+".":""}
-Achados: ${achadosTxt(1)||"—"}. Sinais vitais: ${svTxt()}.${T(A.exame)?"\nExame físico: "+T(A.exame)+".":""}
-Condutas já realizadas na UPA: ${[X.length?"exames: "+X.join(", "):"",RXD.length?"prescrição: "+RXD.join(", "):""].filter(Boolean).join(". ")||PH("condutas")}
+Achados: ${achadosTxt(1)||"—"}. Sinais vitais: ${svTxt()}.${efAny()?"\nExame físico: "+efTxt().replace(/\n  /g," ")+".":""}
+Condutas já realizadas na UPA: ${condTxt()||PH("condutas")}
 Condição no momento da solicitação: ${PH("estabilidade, via aérea, suporte em uso")}
 Serviço/vaga de destino: ${PH("serviço e contato da regulação")}
 
@@ -701,8 +738,13 @@ function dockBuild(){
     <div class="dk-l">Cirurgias prévias</div><div class="dk-chips">${tg("flag","cirNega","Nega cirurgias")}</div>${inp("cirurg","a-cir","Quais e quando")}
     <div class="dk-l">Alergias</div><div class="dk-chips" id="d-alg">${tg("algx","nega","Nega alergias")}${tg("algx","ns","Não sabe")}${Object.entries(ALG).map(([k,t])=>tg("alg",k,t)).join("")}</div>${inp("algOutras","a-alo","Outras (alimentos, látex, contraste…)")}
     <div class="dk-l">AF · antecedentes familiares</div><div class="dk-chips" id="a-af">${tg("flag","afNega","Sem relevância")}${tgs("af",AFS)}</div>${inp("afTxt","a-aft","Quem e outros detalhes")}
-    <div class="dk-l">Exame físico</div>${ta("exame","a-exame","Exame físico (além dos sinais vitais)",3)}<div class="dk-b"><button type="button" class="ghost mini" id="a-modelo">Inserir modelo de exame geral (edite!)</button></div>`)}
-  ${box("evo","Evolução",`<div id="evoStatus"></div>${doc("evo","Evolução")}`)}
+    <div class="dk-l">Exame físico (além dos sinais vitais)</div>
+    <div class="dk-b"><button type="button" class="ghost mini" id="ef-all">Preencher todos os sistemas como normais</button><button type="button" class="ghost mini" id="ef-clear">Limpar</button></div>
+    <p class="src" style="margin:0">Os textos “normal” são só um ponto de partida: edite cada sistema com o que você realmente encontrou.</p>
+    ${Object.entries(EFS).map(([k,t])=>`<div class="ef-r"><label for="ef-${k}">${esc(t)}</label>${k!=="outros"?`<button type="button" class="ghost mini" data-efn="${k}">normal</button>`:""}</div><textarea id="ef-${k}" data-ef="${k}" rows="2" placeholder="${esc(k==="outros"?"Outros achados…":"Achados de "+t.split(" (")[0].toLowerCase())}"></textarea>`).join("")}`)}
+  ${box("hd","Hipóteses diagnósticas (CID)",`<input type="text" id="hd-q" placeholder="Buscar CID ou doença (ex.: asma, J45, cefaleia)" autocomplete="off"><div class="hd-sug" id="hd-sug" hidden></div><ul class="hd-list" id="hdList"></ul>
+    <p class="src">Adicione mais de uma HD e vá marcando como <b>confirmada</b> ou <b>afastada</b>, anotando por quê (exame físico ou complementar). A primeira não afastada é a HD principal. Lista: CID-10 do DATASUS (2008) com os mais usados no topo.</p>`)}
+  ${box("evo","Evolução",`<div id="evoStatus"></div><div class="dk-l">Conduta</div>${ta("cond","a-cond","Conduta, orientações e decisões (além de exames e prescrição)",2)}<div class="dk-b"><button type="button" class="ghost mini" id="cond-ficha">+ condutas da ficha da HD</button></div>${doc("evo","Evolução")}`)}
   ${box("ex","Exames solicitados",`<div class="dk-chips" id="exQuick">${EXQ.map(x=>`<button type="button" class="tog" data-exq="${esc(x)}" aria-pressed="false">${esc(x)}</button>`).join("")}</div>
     <div class="dk-add"><input type="text" id="ex-new" placeholder="Outro exame"><button type="button" class="ghost" id="ex-add">+</button></div><ul class="dk-list" id="exList"></ul>
     <div class="dk-b"><button type="button" data-copy="ex">Copiar pedido</button></div>`)}
@@ -717,8 +759,11 @@ function dockBuild(){
   const open=v=>{document.body.classList.toggle("dock-open",v);fab.hidden=v;store.set("dock",v?"1":"0")};
   fab.onclick=()=>open(true);$("#dk-x").onclick=()=>open(false);
   window.dockOpen=open;open(store.get("dock")==="1"||(store.get("dock")===null&&innerWidth>=1100));
-  el.addEventListener("input",e=>{const t=e.target;if(t.dataset.ak){A[t.dataset.ak]=t.value;dockDocs()}if(t.classList.contains("dk-ta")){const id=t.id.slice(2);if(dirty[id]!==undefined){dirty[id]=true;dkEd()}}});
-  el.addEventListener("change",e=>{const t=e.target;if(t.dataset.ak){A[t.dataset.ak]=t.value;dockDocs()}});
+  el.addEventListener("input",e=>{const t=e.target;if(t.dataset.ak){A[t.dataset.ak]=t.value;dockDocs()}if(t.dataset.ef){A.ef[t.dataset.ef]=t.value;dockDocs()}if(t.dataset.hdn!==undefined){HD[+t.dataset.hdn].nota=t.value;dockDocs()}if(t.id==="hd-q")hdSug();if(t.classList.contains("dk-ta")){const id=t.id.slice(2);if(dirty[id]!==undefined){dirty[id]=true;dkEd()}}});
+  el.addEventListener("change",e=>{const t=e.target;if(t.dataset.ak){A[t.dataset.ak]=t.value;dockDocs()}if(t.dataset.hdst!==undefined){HD[+t.dataset.hdst].st=t.value;dirty.evo=dirty.carta=dirty.enc=false;dockRefresh()}});
+  const hq=$("#hd-q");hq.addEventListener("focus",()=>{$("#hd-sug").hidden=false;cidLoad();hdSug()});hq.addEventListener("blur",()=>setTimeout(()=>{$("#hd-sug").hidden=true},200));
+  hq.addEventListener("keydown",e=>{if(e.key==="Enter"&&HDRES[0]){const r=HDRES[0];addHD(r.c,r.n,r.q);hq.value="";hdSug()}if(e.key==="Escape"){hq.blur()}});
+  $("#hd-sug").addEventListener("mousedown",e=>e.preventDefault());
   el.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const g=b.dataset.a,k=b.dataset.k;
     if(g){if(g==="ini")A.inicio=A.inicio===k?"":k;else if(g==="cur")A.curso=A.curso===k?"":k;else if(g==="hab"||g==="af"){const s=g==="hab"?A.hab:A.af;s.has(k)?s.delete(k):s.add(k);if(g==="af"&&s.size)A.afNega=false}
       else if(g==="flag"){A[k]=!A[k];if(k==="apNega"&&A[k]&&P.com.size){A[k]=false}if(k==="afNega"&&A[k])A.af.clear()}
@@ -726,6 +771,14 @@ function dockBuild(){
       else if(g==="alg"){P.alg.has(k)?P.alg.delete(k):P.alg.add(k);if(P.alg.size){P.algNega=false;P.algNS=false}mudou();return}
       else if(g==="algx"){if(k==="ns"){P.algNS=!P.algNS;if(P.algNS)P.algNega=false}else{P.algNega=!P.algNega;if(P.algNega){P.algNS=false;P.alg.clear()}}mudou();return}
       dockRefresh();return}
+    if(b.dataset.hdsug!==undefined){const r=HDRES[+b.dataset.hdsug];if(r){addHD(r.c,r.n,r.q);$("#hd-q").value="";hdSug()}return}
+    if(b.dataset.hdfree){const q=T($("#hd-q").value);if(q){addHD("",q,"");$("#hd-q").value="";hdSug()}return}
+    if(b.dataset.hdrm!==undefined){HD.splice(+b.dataset.hdrm,1);dirty.evo=dirty.carta=dirty.enc=false;dockRefresh();return}
+    if(b.dataset.hdup!==undefined){const i=+b.dataset.hdup;if(i>0){[HD[i-1],HD[i]]=[HD[i],HD[i-1]];dirty.evo=dirty.carta=dirty.enc=false;dockRefresh()}return}
+    if(b.dataset.efn){const k=b.dataset.efn;A.ef[k]=EFN[k];$("#ef-"+k).value=A.ef[k];dockRefresh();return}
+    if(b.id==="ef-all"){Object.keys(EFN).forEach(k=>{if(!T(A.ef[k])){A.ef[k]=EFN[k];$("#ef-"+k).value=A.ef[k]}});dockRefresh();return}
+    if(b.id==="ef-clear"){Object.keys(A.ef).forEach(k=>{A.ef[k]="";$("#ef-"+k).value=""});dockRefresh();return}
+    if(b.id==="cond-ficha"){const q=hdQ();if(!q||!q.agora){toast("A HD principal não tem ficha com condutas");return}const add=q.agora.map(x=>"- "+x).join("\n");A.cond=T(A.cond)?A.cond+"\n"+add:add;$("#a-cond").value=A.cond;dockRefresh();return}
     if(b.dataset.qp){A.qp=b.dataset.qp;$("#a-qp").value=A.qp;dockRefresh();return}
     if(b.dataset.exq){X.includes(b.dataset.exq)?X.splice(X.indexOf(b.dataset.exq),1):X.push(b.dataset.exq);dockRefresh();return}
     if(b.dataset.go){const id=b.dataset.go;if(id==="kill"){location.hash="#atendimento";return}const x=document.getElementById(id);if(x){x.scrollIntoView({block:"center"});if(x.focus)x.focus()}return}
@@ -734,20 +787,27 @@ function dockBuild(){
     if(b.dataset.copy){const id=b.dataset.copy,txt=id==="ex"?exTxt():id==="rx"?rxLinhas():$("#d-"+id).value;if(!txt){toast("Nada para copiar");return}
       const m=faltas().e.length;copiar(txt,id==="evo"&&m?`Copiado — ${m} campo(s) fundamentais a preencher`:"Copiado");return}
     if(b.id==="ex-add"){addEx($("#ex-new").value);$("#ex-new").value="";return}if(b.id==="rx-add"){addRx($("#rx-new").value);$("#rx-new").value="";return}
-    if(b.id==="a-modelo"){const m="Bom estado geral, corado, hidratado, acianótico, anictérico, afebril, eupneico em ar ambiente.";A.exame=T(A.exame)?A.exame+"\n"+m:m;$("#a-exame").value=A.exame;dockRefresh();return}
     if(b.id==="dk-all"){const t=[$("#d-evo").value,exTxt(),rxLinhas()?"Prescrição:\n"+rxLinhas():""].filter(Boolean).join("\n\n");const m=faltas().e.length;copiar(t,m?`Copiado — ${m} campo(s) fundamentais a preencher`:"Copiado")}});
   el.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="ex-new"){addEx(e.target.value);e.target.value=""}if(e.key==="Enter"&&e.target.id==="rx-new"){addRx(e.target.value);e.target.value=""}});
 }
 function dkEd(){["evo","carta","enc"].forEach(k=>{const s=$("#ed-"+k);if(s)s.textContent=dirty[k]?"editado à mão":""})}
-function dockFill(){if(!dk)return;dk.querySelectorAll("[data-ak]").forEach(t=>t.value=A[t.dataset.ak]);}
+function dockFill(){if(!dk)return;dk.querySelectorAll("[data-ak]").forEach(t=>t.value=A[t.dataset.ak]);dk.querySelectorAll("[data-ef]").forEach(t=>t.value=A.ef[t.dataset.ef]);const q=$("#hd-q");if(q)q.value=""}
 function dockDocs(){if(!dk)return;
   if(!dirty.evo)$("#d-evo").value=evolucao();if(!dirty.carta)$("#d-carta").value=carta();if(!dirty.enc)$("#d-enc").value=encam();dkEd();
   const m=faltas(),chip=(a,c)=>a.map(([id,t])=>`<button type="button" class="chip ${c}" data-go="${id}">${esc(t)}</button>`).join(" ");
   $("#evoStatus").innerHTML=(m.e.length?`<div class="alarm dk-miss"><b>Fundamental faltando (${m.e.length}):</b> ${chip(m.e,"c-bad")}</div>`:`<div class="dk-ok">Dados fundamentais completos</div>`)+(m.r.length?`<div class="dk-rec"><b>Recomendado:</b> ${chip(m.r,"c-warn")}</div>`:"");
   const st=(id,n,extra)=>{const s=$("#st-"+id);s.textContent=n?`⚠ ${n}`:extra||"✓";s.className="dk-st "+(n?"bad":"ok")};
   st("anam",m.e.filter(x=>!x[0].startsWith("p-")&&x[0]!=="kill").length);st("evo",m.e.length);
-  $("#st-ex").textContent=X.length?X.length+" item(ns)":"";$("#st-rx").textContent=RXD.length?RXD.length+" item(ns)":"";$("#st-carta").textContent="";$("#st-enc").textContent=""}
-function dockRefresh(){if(!dk)return;
+  const ah=$("#at-hd");if(ah)ah.textContent=hdTxt()||"— escolha no painel Prontuário";$("#st-ex").textContent=X.length?X.length+" item(ns)":"";$("#st-rx").textContent=RXD.length?RXD.length+" item(ns)":"";$("#st-carta").textContent="";$("#st-enc").textContent=""}
+let HDRES=[];
+function hdSug(){const el=$("#hd-sug");if(!el||el.hidden)return;const q=$("#hd-q").value;HDRES=cidBusca(q).slice(0,T(q)?40:REC.length);const ja=new Set(HD.map(h=>h.code+"|"+h.txt));
+  const ctx=!T(q)&&(qpTxt()||dorTxt());
+  el.innerHTML=(T(q)?"":`<div class="src hd-h">${ctx?"Sugeridos pelos achados e mais usados":"Mais usados"} ★</div>`)+HDRES.map((r,i)=>`<button type="button" class="hd-i${ja.has(r.c+"|"+r.n)?" on":""}" data-hdsug="${i}"><b>${esc(r.c)}</b> ${esc(r.n)}${r.rec?' <span class="hd-star">★</span>':""}</button>`).join("")
+   +(T(q)?`<button type="button" class="hd-i hd-free" data-hdfree="1">Usar “${esc(T(q))}” como texto livre</button>`:"")+(T(q)&&!CIDALL?'<div class="src">Carregando a lista completa do CID-10…</div>':"")}
+function hdRender(){const pr=hdPrincipal();$("#hdList").innerHTML=HD.length?HD.map((h,i)=>`<li class="hd-row ${h.st}"><div class="hd-top"><span class="hd-nm">${h===pr?'<b class="hd-pr">HD</b> ':""}${esc(hdNome(h))}</span><span class="hd-btn">${i?`<button type="button" class="ghost mini" data-hdup="${i}" aria-label="Subir">▲</button>`:""}<button type="button" class="ghost mini" data-hdrm="${i}" aria-label="Remover">×</button></span></div>
+    <div class="hd-ctl"><select data-hdst="${i}" aria-label="Status">${Object.entries(ST).map(([k,t])=>`<option value="${k}"${h.st===k?" selected":""}>${t}</option>`).join("")}</select><input type="text" data-hdn="${i}" value="${esc(h.nota)}" placeholder="por quê (ex.: ECG normal, troponina negativa)"></div></li>`).join(""):'<li class="src">Nenhuma HD escolhida.</li>';
+  $("#st-hd").textContent=HD.length?HD.length+" HD":"";hdSug()}
+function dockRefresh(){if(!dk)return;hdRender();
   const comKeys=P.modo==="adulto"?Object.keys(COM):["asma","imuno","cardio","prematuro"],cn=Object.assign({},COM,{cardio:"Cardiopatia",prematuro:"Prematuro"});
   $("#d-com").innerHTML=comKeys.map(k=>`<button type="button" class="tog" data-a="com" data-k="${k}" aria-pressed="false">${esc(cn[k])}</button>`).join("");
   dk.querySelectorAll("[data-a]").forEach(b=>{const g=b.dataset.a,k=b.dataset.k;let on=false;
@@ -760,7 +820,7 @@ function dockRefresh(){if(!dk)return;
   $("#exList").innerHTML=X.length?X.map((x,i)=>`<li>${esc(x)}<button type="button" class="ghost mini" data-rmx="${i}" aria-label="Remover">×</button></li>`).join(""):'<li class="src">Nenhum exame.</li>';
   $("#rxList").innerHTML=RXD.length?RXD.map((x,i)=>`<li>${esc(x)}<button type="button" class="ghost mini" data-rmr="${i}" aria-label="Remover">×</button></li>`).join(""):'<li class="src">Nenhum item.</li>';
   dockDocs()}
-function dockNovo(){A=A0();X=[];RXD=[];dirty={evo:false,carta:false,enc:false};dockFill()}
+function dockNovo(){A=A0();X=[];RXD=[];HD=[];dirty={evo:false,carta:false,enc:false};dockFill()}
 dockBuild();
 
 window.addEventListener("hashchange",rota);
@@ -825,6 +885,17 @@ body.dock-open #dock{display:flex}
 .dk-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
 .dk-list li{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.88rem;border-bottom:1px solid var(--line);padding:3px 0}
 .mini{font-size:.72rem!important;padding:2px 8px!important}
+.ef-r{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px}.ef-r label{font-size:.82rem;color:var(--muted);font-weight:600}
+.hd-sug{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--bg);display:flex;flex-direction:column}
+.hd-sug[hidden]{display:none}.hd-h{padding:6px 10px 2px}
+.hd-i{text-align:left;font:inherit;font-size:.85rem;color:var(--ink);background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:7px 10px;cursor:pointer}
+.hd-i:hover,.hd-i:focus-visible{background:var(--accent-soft)}.hd-i.on{opacity:.45}.hd-i b{font-family:var(--f-mono);color:var(--accent)}.hd-star{color:var(--warn);font-size:.75rem}.hd-free{color:var(--accent)}
+.hd-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.hd-row{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:rgba(160,96,216,.06)}
+.hd-row.conf{border-color:var(--ok)}.hd-row.afast{opacity:.7}.hd-row.afast .hd-nm{text-decoration:line-through}
+.hd-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;font-size:.9rem}.hd-btn{display:flex;gap:4px;flex:0 0 auto}
+.hd-pr{font-family:var(--f-mono);font-size:.7rem;background:var(--accent);color:#1a0d1f;padding:1px 6px;border-radius:5px}
+.hd-ctl{display:flex;gap:6px;margin-top:6px}.hd-ctl select{flex:0 0 auto;font-size:.8rem;padding:4px 6px}.hd-ctl input{flex:1}
 .pain .pn-l{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:10px 0 5px}
 .pain .dk-chips .tog{font-size:.8rem;padding:3px 10px;border-radius:99px;background:transparent;color:var(--muted);border:1px solid var(--line);cursor:pointer}
 .pain .dk-chips .tog[aria-pressed=true]{background:var(--accent-soft);color:var(--ink);border-color:var(--accent);font-weight:600}
