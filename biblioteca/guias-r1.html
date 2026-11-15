@@ -17,7 +17,8 @@
     .tab { flex: 0 0 auto; text-align: center; padding: 12px 20px; color: rgba(237,230,255,.6); cursor: pointer; white-space: nowrap; font-size: 0.9rem; border-bottom: 2px solid transparent; font-weight: 500; transition: all 0.2s; }
     .tab:hover:not(.locked) { color: #EDE6FF; background: rgba(216,184,255,.05); }
     .tab.active { color: #D9B8FF; border-bottom: 2px solid #D9B8FF; font-weight: 600; background: rgba(216,184,255,.08); }
-    .tab.locked { cursor: not-allowed; opacity: 0.5; }
+    .tab.locked { cursor: not-allowed; color: #8A8696; filter: grayscale(1); opacity: 0.55; pointer-events: auto; }
+    .tab.locked:hover { background: none; color: #8A8696; }
     .content-frame { width: 100%; height: calc(100% - 92px); border: none; display: block; }
   </style>
 </head>
@@ -28,15 +29,25 @@
   </div>
   <div class="tabs-wrapper">
     <div class="tabs">
-      <div class="tab active">Patologia</div>
-      <div class="tab locked">Genética Médica 🔒</div>
-      <div class="tab locked">Clínica Médica 🔒</div>
-      <div class="tab locked">Radioterapia 🔒</div>
-      <div class="tab locked">Radiologia 🔒</div>
-      <div class="tab locked">Patologia Clínica 🔒</div>
-      <div class="tab locked">Reabilitação 🔒</div>
+      <div class="tab active" data-src="pato/index.html">Patologia</div>
+      <div class=\"tab\" data-src=\"genetica/index.html\">Genética Médica</div>
+      <div class="tab locked" aria-disabled="true" title="Lançamento em breve ✨">Clínica Médica 🔒</div>
+      <div class="tab locked" aria-disabled="true" title="Lançamento em breve ✨">Radioterapia 🔒</div>
+      <div class="tab locked" aria-disabled="true" title="Lançamento em breve ✨">Radiologia 🔒</div>
+      <div class="tab locked" aria-disabled="true" title="Lançamento em breve ✨">Patologia Clínica e Laboratorial 🔒</div>
+      <div class="tab locked" aria-disabled="true" title="Lançamento em breve ✨">Medicina de Reabilitação 🔒</div>
     </div>
   </div>
   <iframe class="content-frame" id="frame-0" src="pato/index.html"></iframe>
+  <script>
+    document.querySelectorAll(".tab").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        if (tab.classList.contains("locked")) return; // bloqueadas: lançamento em breve
+        document.querySelectorAll(".tab").forEach(function (t) { t.classList.toggle("active", t === tab); });
+        var f = document.getElementById("frame-0");
+        if (tab.dataset.src && f.getAttribute("src") !== tab.dataset.src) f.setAttribute("src", tab.dataset.src);
+      });
+    });
+  </script>
 </body>
 </html>
